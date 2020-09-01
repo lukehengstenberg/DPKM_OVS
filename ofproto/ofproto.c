@@ -6292,9 +6292,11 @@ int configure_wg(void)
 int add_peer_wg(struct ofputil_dpkm_add_peer pin)
 {
     char *cmd = (char*)malloc(400 * sizeof(char));
-
+    pin.key[strcspn(pin.key, "\n")] = 0;
     sprintf(cmd, "wg set wg0 peer %s allowed-ips %s/32 endpoint %s:5555",
             pin.key, pin.ipv4_wg, pin.ipv4_addr);
+    //sprintf(cmd, "echo 'peer %s allowed-ips %s/32 endpoint %s:5555' > peer.txt",
+            //pin.key, pin.ipv4_wg, pin.ipv4_addr);
     char buf[BUFSIZE];
     FILE *fp;
 
@@ -6319,7 +6321,7 @@ int add_peer_wg(struct ofputil_dpkm_add_peer pin)
 int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
 {
     char *cmd = (char*)malloc(300 * sizeof(char));
-
+    din.key[strcspn(din.key, "\n")] = 0;
     sprintf(cmd, "wg set wg0 peer %s remove",
             din.key);
     char buf[BUFSIZE];
