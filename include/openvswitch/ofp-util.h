@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "openvswitch/ofp-protocol.h"
+#include "openflow/dpkm-ext.h"
 
 struct ofp_header;
 
@@ -34,6 +35,69 @@ void ofputil_hello_format(struct ds *, const struct ofp_header *);
 
 struct ofpbuf *ofputil_encode_echo_request(enum ofp_version);
 struct ofpbuf *ofputil_encode_echo_reply(const struct ofp_header *);
+
+#define KEY_LEN 256
+#define IP_LEN 32
+/* Abstract ofp_dpkm_test_request and reply. */
+struct ofputil_dpkm_test_request {
+    uint32_t experimenter;
+    uint32_t subtype;
+};
+
+/* Abstract of ofp_dpkm_set_key. */
+struct ofputil_dpkm_set_key {
+    uint32_t experimenter;
+    uint32_t subtype;
+    //struct ofpact *ofpacts;     /* Actions. */
+    //size_t ofpacts_len;         /* Size of ofpacts in bytes. */
+};
+
+/* Abstract of ofp_dpkm_add_peer. */
+struct ofputil_dpkm_add_peer {
+    uint32_t experimenter;
+    uint32_t subtype;
+    char key[KEY_LEN];
+    char ipv4_addr[IP_LEN];
+    char ipv4_wg[IP_LEN];
+};
+
+/* Abstract of ofp_dpkm_delete_peer. */
+struct ofputil_dpkm_delete_peer {
+    uint32_t experimenter;
+    uint32_t subtype;
+    char key[KEY_LEN];
+    char ipv4_addr[IP_LEN];
+    char ipv4_wg[IP_LEN];
+};
+
+/* Abstract of ofp_dpkm_status. */
+struct ofputil_dpkm_status {
+    uint32_t experimenter;
+    uint32_t subtype;
+    enum ofp_dpkm_status_flag status_flag;
+    char key[KEY_LEN];
+    char ipv4_addr[IP_LEN];
+    char ipv4_wg[IP_LEN];
+    char ipv4_peer[IP_LEN];
+};
+
+int test_if_working(void);
+enum ofperr ofputil_decode_dpkm_test_message(const struct ofp_header *,
+                                        struct ofputil_dpkm_test_request *);
+void ofputil_format_dpkm_test_message(struct ds *,
+                                 const struct ofputil_dpkm_test_request *);
+struct ofpbuf *ofputil_encode_dpkm_test_reply(const struct ofp_header *,
+                                         const struct ofputil_dpkm_test_request *);
+
+enum ofperr ofputil_decode_dpkm_set_key(const struct ofp_header *,
+                                    struct ofputil_dpkm_set_key *);
+enum ofperr ofputil_decode_dpkm_add_peer(const struct ofp_header *,
+                                    struct ofputil_dpkm_add_peer *);
+enum ofperr ofputil_decode_dpkm_delete_peer(const struct ofp_header *,
+                                       struct ofputil_dpkm_delete_peer *);
+
+struct ofpbuf *ofputil_encode_dpkm_status(const struct ofp_header *,
+                              const struct ofputil_dpkm_status *);
 
 struct ofpbuf *ofputil_encode_barrier_request(enum ofp_version);
 

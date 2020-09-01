@@ -32,6 +32,7 @@
 #include "netdev.h"
 #include "nx-match.h"
 #include "id-pool.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/netronome-ext.h"
 #include "openvswitch/dynamic-string.h"
 #include "openvswitch/json.h"
@@ -211,6 +212,169 @@ ofputil_encode_echo_reply(const struct ofp_header *rq)
                                               rq, rq_buf.size);
     ofpbuf_put(reply, rq_buf.data, rq_buf.size);
     return reply;
+}
+
+#define DPKM_VENDOR 0xa20a0323
+
+#include <stdio.h>
+#include <stdlib.h>
+#define BUFSIZE 128
+
+int test_if_working(void)
+{
+    char *cmd = "grep --help > OVS_Test.txt";
+    char buf[BUFSIZE];
+    FILE *fp;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        printf("Error opening pipe!\n");
+        return -1;
+    }
+    while (fgets(buf, BUFSIZE, fp) != NULL )
+    {
+        printf("OUTPUT: %s", buf);
+    }
+    if(pclose(fp))
+    {
+        printf("Command not found or exited with error status\n");
+        return -1;
+    }
+    return 0;
+}
+
+
+enum ofperr
+ofputil_decode_dpkm_test_message(const struct ofp_header *oh,
+                            struct ofputil_dpkm_test_request *rr)
+{
+    struct ofpbuf b = ofpbuf_const_initializer(oh, ntohs(oh->length));
+    enum ofpraw raw = ofpraw_pull_assert(&b);
+    if (raw == OFPRAW_DPKM_TEST_REQUEST ||
+        raw == OFPRAW_DPKM_TEST_REPLY) {
+
+        const struct ofp_dpkm_test_request *orr = b.msg;
+
+        rr->experimenter = ntohl(orr->experimenter);
+        rr->subtype = ntohl(orr->subtype);
+    } else {
+        OVS_NOT_REACHED();
+    }
+    return 0;
+}
+
+struct ofpbuf *
+ofputil_encode_dpkm_test_reply(const struct ofp_header *request,
+                          const struct ofputil_dpkm_test_request *rr)
+{
+    struct ofpbuf *buf;
+    enum ofpraw raw;
+
+    raw = ofpraw_decode_assert(request);
+    if (raw == OFPRAW_DPKM_TEST_REQUEST) {
+        struct ofp_dpkm_test_request *orr;
+
+        buf = ofpraw_alloc_reply(OFPRAW_DPKM_TEST_REPLY, request, 0);
+        orr = ofpbuf_put_zeros(buf, sizeof *orr);
+
+        orr->experimenter = htonl(rr->experimenter);
+        orr->subtype = htonl(rr->subtype + 1);
+    } else {
+        OVS_NOT_REACHED();
+    }
+
+    return buf;
+}
+
+/* Decodes an OFPT_DPKM_SET_KEY message. */
+enum ofperr
+ofputil_decode_dpkm_set_key(const struct ofp_header *oh,
+                            struct ofputil_dpkm_set_key *kin)
+{
+    struct ofpbuf b = ofpbuf_const_initializer(oh, ntohs(oh->length));
+    enum ofpraw raw = ofpraw_pull_assert(&b);
+
+    if (raw == OFPRAW_DPKM_SET_KEY) {
+        const struct ofp_dpkm_set_key *osk = b.msg;
+        kin->experimenter = ntohl(osk->experimenter);
+        kin->subtype = ntohl(osk->subtype);
+    } else {
+        //return OFPERR_DPKM_SET_PRIVATE_KEY;
+        OVS_NOT_REACHED();
+    }
+    return 0;
+}
+
+/* Decodes an OFPT_DPKM_ADD_PEER message. */
+enum ofperr
+ofputil_decode_dpkm_add_peer(const struct ofp_header *oh,
+                             struct ofputil_dpkm_add_peer *pin)
+{
+    struct ofpbuf b = ofpbuf_const_initializer(oh, ntohs(oh->length));
+    enum ofpraw raw = ofpraw_pull_assert(&b);
+
+    if (raw == OFPRAW_DPKM_ADD_PEER) {
+        const struct ofp_dpkm_add_peer *apm = b.msg;
+        pin->experimenter = ntohl(apm->experimenter);
+        pin->subtype = ntohl(apm->subtype);
+        ovs_strlcpy(pin->key, apm->key, sizeof pin->key);
+        ovs_strlcpy(pin->ipv4_addr, apm->ipv4_addr, sizeof pin->ipv4_addr);
+        ovs_strlcpy(pin->ipv4_wg, apm->ipv4_wg, sizeof pin->ipv4_wg);
+    } else {
+        OVS_NOT_REACHED();
+    }
+    return 0;
+}
+
+/* Decodes an OFPT_DPKM_DELETE_PEER message. */
+enum ofperr
+ofputil_decode_dpkm_delete_peer(const struct ofp_header *oh,
+                             struct ofputil_dpkm_delete_peer *din)
+{
+    struct ofpbuf b = ofpbuf_const_initializer(oh, ntohs(oh->length));
+    enum ofpraw raw = ofpraw_pull_assert(&b);
+
+    if (raw == OFPRAW_DPKM_DELETE_PEER) {
+        const struct ofp_dpkm_delete_peer *dpm = b.msg;
+        din->experimenter = ntohl(dpm->experimenter);
+        din->subtype = ntohl(dpm->subtype);
+        ovs_strlcpy(din->key, dpm->key, sizeof din->key);
+        ovs_strlcpy(din->ipv4_addr, dpm->ipv4_addr, sizeof din->ipv4_addr);
+        ovs_strlcpy(din->ipv4_wg, dpm->ipv4_wg, sizeof din->ipv4_wg);
+    } else {
+        OVS_NOT_REACHED();
+    }
+    return 0;
+}
+
+/* Creates and returns an OFPT_DPKM_STATUS message. */
+struct ofpbuf *
+ofputil_encode_dpkm_status(const struct ofp_header *request,
+                      const struct ofputil_dpkm_status *cstatus)
+{
+    struct ofpbuf *buf;
+    enum ofpraw raw;
+    static const char *public_key = "MMhEd/uLIEvUxfvuFOF34bAvbYPnaSwFrhgNMf8nT34=";
+
+    raw = ofpraw_decode_assert(request);
+    if (raw == OFPRAW_DPKM_SET_KEY) {
+        struct ofp_dpkm_status *kstatus;
+
+        buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, request, 0);
+        kstatus = ofpbuf_put_zeros(buf, sizeof *kstatus);
+
+        //kstatus->experimenter = htonl(cstatus->experimenter);
+       // kstatus->subtype = htonl(cstatus->subtype);
+        kstatus->status_flag = htonl(cstatus->status_flag);
+        //kstatus->status_flag = 0;
+        //kstatus->ipv4_dst = htonl(cstatus->ipv4_dst);
+        //kstatus->ipv4_dst = 0xc0a80008;
+        ovs_strlcpy(kstatus->key, public_key, sizeof kstatus->key);
+    } else {
+        OVS_NOT_REACHED();
+    }
+
+  return buf;
 }
 
 struct ofpbuf *

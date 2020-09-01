@@ -1426,6 +1426,12 @@ is_admitted_msg(const struct ofpbuf *b)
     case OFPTYPE_IPFIX_FLOW_STATS_REQUEST:
     case OFPTYPE_IPFIX_FLOW_STATS_REPLY:
     case OFPTYPE_CT_FLUSH_ZONE:
+    case OFPTYPE_DPKM_SET_KEY:
+    case OFPTYPE_DPKM_ADD_PEER:
+    case OFPTYPE_DPKM_DELETE_PEER:
+    case OFPTYPE_DPKM_STATUS:
+    case OFPTYPE_DPKM_TEST_REQUEST:
+    case OFPTYPE_DPKM_TEST_REPLY:
     default:
         return true;
     }

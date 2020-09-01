@@ -110,6 +110,7 @@ enum ofp_version {
 #define NX_VENDOR_ID    0x00002320 /* Nicira. */
 #define ONF_VENDOR_ID   0x4f4e4600 /* Open Networking Foundation. */
 #define INTEL_VENDOR_ID 0x0000AA01 /* Intel */
+#define DPKM_VENDOR_ID 0xa20a0323  /* Data Plane Key Management. */
 
 #define OFP_MAX_TABLE_NAME_LEN 32
 #define OFP_MAX_PORT_NAME_LEN  16

@@ -16,6 +16,7 @@ VERSION = {"1.0": 0x01,
 
 NX_VENDOR_ID = 0x00002320
 ONF_VENDOR_ID = 0x4f4e4600
+DPKM_VENDOR_ID = 0xa20a0323
 
 OFPT_VENDOR = 4
 OFPT10_STATS_REQUEST = 16
@@ -193,6 +194,8 @@ def extract_ofp_msgs(output_file_name):
                 else:
                     hdrs = (version, OFPT11_STATS_REPLY, OFPST_VENDOR,
                             NX_VENDOR_ID, number)
+            elif type_ == 'DPKM':
+                hdrs = (version, OFPT_VENDOR, 0, DPKM_VENDOR_ID, number)
             else:
                 fatal("type '%s' unknown" % type_)
 
@@ -300,7 +303,7 @@ def extract_ofp_msgs(output_file_name):
         for hdrs in r['hdrs']:
             output.append("    { {0, NULL}, {%d, %d, %d, 0x%x, %d}, %s, 0 },"
                           % (hdrs + (raw,)))
-                
+
         output.append("};")
 
     output.append("")
@@ -378,4 +381,3 @@ if __name__ == '__main__':
 
         for line in extract_ofp_msgs(sys.argv[2]):
             print(line)
-        

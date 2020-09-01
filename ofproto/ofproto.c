@@ -21,6 +21,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <string.h>
 
 #include "bitmap.h"
 #include "bundles.h"
@@ -36,6 +43,7 @@
 #include "nx-match.h"
 #include "ofproto.h"
 #include "ofproto-provider.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openflow/openflow.h"
 #include "openvswitch/dynamic-string.h"
@@ -3302,7 +3310,7 @@ learned_cookies_flush(struct ofproto *ofproto, struct ovs_list *dead_cookies)
     }
     minimatch_destroy(&match);
 }
-
+
 static enum ofperr
 handle_echo_request(struct ofconn *ofconn, const struct ofp_header *oh)
 {
@@ -5886,7 +5894,6 @@ modify_flow_start_strict(struct ofproto *ofproto, struct ofproto_flow_mod *ofm)
 }
 
 /* OFPFC_DELETE implementation. */
-
 static void
 delete_flows_start__(struct ofproto *ofproto, ovs_version_t version,
                      const struct rule_collection *rules)
@@ -6213,7 +6220,7 @@ handle_flow_mod__(struct ofproto *ofproto, const struct ofputil_flow_mod *fm,
     error = ofproto_flow_mod_start(ofproto, &ofm);
     if (!error) {
         ofproto_bump_tables_version(ofproto);
-        error = ofproto_flow_mod_finish(ofproto, &ofm, req);        
+        error = ofproto_flow_mod_finish(ofproto, &ofm, req);
         ofmonitor_flush(ofproto->connmgr);
     }
     ovs_mutex_unlock(&ofproto_mutex);
@@ -6248,6 +6255,287 @@ handle_role_request(struct ofconn *ofconn, const struct ofp_header *oh)
     reply.have_generation_id = ofconn_get_master_election_id(
         ofconn, &reply.generation_id);
     buf = ofputil_encode_role_reply(oh, &reply);
+    ofconn_send_reply(ofconn, buf);
+
+    return 0;
+}
+
+#include <stdio.h>
+#include <stdlib.h>
+#define BUFSIZE 128
+#define IP_LEN 32
+
+int configure_wg(void)
+{
+    char *cmd = "./ConfigureWG.sh";
+    char buf[BUFSIZE];
+    FILE *fp;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        printf("Error opening pipe!\n");
+        return -1;
+    }
+    while (fgets(buf, BUFSIZE, fp) != NULL )
+    {
+        printf("OUTPUT: %s", buf);
+    }
+    if(pclose(fp))
+    {
+        printf("Command not found or exited with error status\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int add_peer_wg(struct ofputil_dpkm_add_peer pin)
+{
+    char *cmd = (char*)malloc(400 * sizeof(char));
+
+    sprintf(cmd, "wg set wg0 peer %s allowed-ips %s/32 endpoint %s:5555",
+            pin.key, pin.ipv4_wg, pin.ipv4_addr);
+    char buf[BUFSIZE];
+    FILE *fp;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        printf("Error opening pipe!\n");
+        return -1;
+    }
+    while (fgets(buf, BUFSIZE, fp) != NULL )
+    {
+        printf("OUTPUT: %s", buf);
+    }
+    if(pclose(fp))
+    {
+        printf("Command not found or exited with error status\n");
+        return -1;
+    }
+    free(cmd);
+    return 0;
+}
+
+int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
+{
+    char *cmd = (char*)malloc(300 * sizeof(char));
+
+    sprintf(cmd, "wg set wg0 peer %s remove",
+            din.key);
+    char buf[BUFSIZE];
+    FILE *fp;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        printf("Error opening pipe!\n");
+        return -1;
+    }
+    while (fgets(buf, BUFSIZE, fp) != NULL )
+    {
+        printf("OUTPUT: %s", buf);
+    }
+    if(pclose(fp))
+    {
+        printf("Command not found or exited with error status\n");
+        return -1;
+    }
+    free(cmd);
+    return 0;
+}
+
+int get_pubkey(char *publickey)
+{
+
+    FILE *fp = fopen("publickey", "r");
+    if (fp == NULL)
+    {
+        printf("Cannot open file");
+        return -1;
+    }
+
+    if(fgets(publickey, BUFSIZE, (FILE*)fp) == NULL)
+    {
+          printf("Error reading file content.");
+          return -1;
+    }
+    fclose(fp);
+    return 0;
+}
+
+int get_ip_addr(char *ipv4_addr)
+{
+    struct ifaddrs * ifAddrStruct=NULL;
+    struct ifaddrs * ifa=NULL;
+    void * tmpAddrPtr=NULL;
+
+    getifaddrs(&ifAddrStruct);
+
+    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr)
+        {
+            continue;
+        }
+        if ((strcmp(ifa->ifa_name,"enp0s3")==0)&&(ifa->ifa_addr->sa_family == AF_INET))
+        { // check it is IP4
+            // is a valid IP4 Address
+            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+
+            inet_ntop(AF_INET, tmpAddrPtr,ipv4_addr, INET_ADDRSTRLEN);
+        }
+    }
+    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+    return 0;
+}
+int get_wg_addr(char *wg_addr)
+{
+    struct ifaddrs * ifAddrStruct=NULL;
+    struct ifaddrs * ifa=NULL;
+    void * tmpAddrPtr=NULL;
+
+    getifaddrs(&ifAddrStruct);
+
+    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr)
+        {
+            continue;
+        }
+        if ((strcmp(ifa->ifa_name,"wg0")==0)&&(ifa->ifa_addr->sa_family == AF_INET))
+        { // check it is IP4
+            // is a valid IP4 Address
+            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+
+            inet_ntop(AF_INET, tmpAddrPtr,wg_addr, INET_ADDRSTRLEN);
+        }
+    }
+    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+    return 0;
+}
+
+/* DPKM Handlers. */
+static enum ofperr
+handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
+{
+    struct ofputil_dpkm_set_key kin;
+    struct ofp_dpkm_status *cstatus;
+    struct ofpbuf *buf;
+    char public_key[BUFSIZE];
+    char ipv4_addr[IP_LEN];
+    char wg_addr[IP_LEN];
+    enum ofperr error;
+
+    error = ofputil_decode_dpkm_set_key(oh, &kin);
+    if (error)
+    {
+        return error;
+    }
+    //ovs_mutex_lock(&ofproto_mutex);
+    configure_wg();
+    get_pubkey(public_key);
+    get_ip_addr(ipv4_addr);
+    get_wg_addr(wg_addr);
+
+    //ovs_mutex_unlock(&ofproto_mutex);
+    // Make this into separate function.
+    buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
+    cstatus = ofpbuf_put_zeros(buf, sizeof *cstatus);
+
+    cstatus->status_flag = 0;
+
+    ovs_strlcpy(cstatus->key, public_key, sizeof cstatus->key);
+    ovs_strlcpy(cstatus->ipv4_addr, ipv4_addr, sizeof cstatus->ipv4_addr);
+    ovs_strlcpy(cstatus->ipv4_wg, wg_addr, sizeof cstatus->ipv4_wg);
+
+    ofconn_send_reply(ofconn, buf);
+
+    return 0;
+}
+
+static enum ofperr
+handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
+{
+    struct ofputil_dpkm_add_peer pin;
+    struct ofp_dpkm_status *pstatus;
+    struct ofpbuf *buf;
+    char public_key[BUFSIZE];
+    char ipv4_addr[IP_LEN];
+    char wg_addr[IP_LEN];
+    //char ipv4_peer[IP_LEN];
+    enum ofperr error;
+
+    error = ofputil_decode_dpkm_add_peer(oh, &pin);
+    if(error)
+    {
+        return error;
+    }
+    add_peer_wg(pin);
+    get_pubkey(public_key);
+    get_ip_addr(ipv4_addr);
+    get_wg_addr(wg_addr);
+
+    buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
+    pstatus = ofpbuf_put_zeros(buf, sizeof *pstatus);
+
+    pstatus->status_flag = htonl(1);
+
+    ovs_strlcpy(pstatus->key, public_key, sizeof pstatus->key);
+    ovs_strlcpy(pstatus->ipv4_addr, ipv4_addr, sizeof pstatus->ipv4_addr);
+    ovs_strlcpy(pstatus->ipv4_wg, wg_addr, sizeof pstatus->ipv4_wg);
+    ovs_strlcpy(pstatus->ipv4_peer, pin.ipv4_addr, sizeof pstatus->ipv4_peer);
+
+    ofconn_send_reply(ofconn, buf);
+    return 0;
+}
+
+static enum ofperr
+handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
+{
+    struct ofputil_dpkm_delete_peer din;
+    struct ofp_dpkm_status *dstatus;
+    struct ofpbuf *buf;
+    char public_key[BUFSIZE];
+    char ipv4_addr[IP_LEN];
+    char wg_addr[IP_LEN];
+    enum ofperr error;
+
+    error = ofputil_decode_dpkm_delete_peer(oh, &din);
+    if(error)
+    {
+        return error;
+    }
+    delete_peer_wg(din);
+    get_pubkey(public_key);
+    get_ip_addr(ipv4_addr);
+    get_wg_addr(wg_addr);
+
+    buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
+    dstatus = ofpbuf_put_zeros(buf, sizeof *dstatus);
+
+    dstatus->status_flag = htonl(2);
+
+    ovs_strlcpy(dstatus->key, public_key, sizeof dstatus->key);
+    ovs_strlcpy(dstatus->ipv4_addr, ipv4_addr, sizeof dstatus->ipv4_addr);
+    ovs_strlcpy(dstatus->ipv4_wg, wg_addr, sizeof dstatus->ipv4_wg);
+    ovs_strlcpy(dstatus->ipv4_peer, din.ipv4_addr, sizeof dstatus->ipv4_peer);
+
+    ofconn_send_reply(ofconn, buf);
+    return 0;
+}
+
+static enum ofperr
+handle_dpkm_test_request(struct ofconn *ofconn, const struct ofp_header *oh)
+{
+    struct ofputil_dpkm_test_request request;
+    struct ofputil_dpkm_test_request reply;
+    struct ofpbuf *buf;
+    enum ofperr error;
+    //test_if_working();
+    error = ofputil_decode_dpkm_test_message(oh, &request);
+    if (error)
+    {
+        return error;
+    }
+
+    buf = ofputil_encode_dpkm_test_reply(oh, &reply);
     ofconn_send_reply(ofconn, buf);
 
     return 0;
@@ -8198,7 +8486,7 @@ do_bundle_commit(struct ofconn *ofconn, uint32_t id, uint16_t flags)
             /* Send error referring to the original message. */
             ofconn_send_error(ofconn, be->msg, error);
             error = OFPERR_OFPBFC_MSG_FAILED;
- 
+
             /* 2. Revert.  Undo all the changes made above. */
             LIST_FOR_EACH_REVERSE_CONTINUE(be, node, &bundle->msg_list) {
                 if (be->type == OFPTYPE_FLOW_MOD) {
@@ -8520,6 +8808,22 @@ handle_single_part_openflow(struct ofconn *ofconn, const struct ofp_header *oh,
 
         /* OpenFlow replies. */
     case OFPTYPE_ECHO_REPLY:
+        return 0;
+
+        /* DPKM extensions. */
+    case OFPTYPE_DPKM_SET_KEY:
+        return handle_dpkm_set_key(ofconn, oh);
+    case OFPTYPE_DPKM_ADD_PEER:
+        return handle_dpkm_add_peer(ofconn, oh);
+    case OFPTYPE_DPKM_DELETE_PEER:
+        return handle_dpkm_delete_peer(ofconn, oh);
+        return 0;
+    case OFPTYPE_DPKM_STATUS:
+        return 0;
+
+    case OFPTYPE_DPKM_TEST_REQUEST:
+        return handle_dpkm_test_request(ofconn, oh);
+    case OFPTYPE_DPKM_TEST_REPLY:
         return 0;
 
         /* Nicira extension requests. */

@@ -27,6 +27,7 @@
 #include "fatal-signal.h"
 #include "flow.h"
 #include "jsonrpc.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openflow/openflow.h"
 #include "openvswitch/dynamic-string.h"

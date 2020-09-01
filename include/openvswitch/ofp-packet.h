@@ -18,6 +18,7 @@
 #define OPENVSWITCH_OFP_PACKET_H 1
 
 #include "openflow/openflow.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/match.h"
 #include "openvswitch/ofp-protocol.h"

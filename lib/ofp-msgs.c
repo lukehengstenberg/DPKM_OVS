@@ -18,6 +18,7 @@
 #include "byte-order.h"
 #include "hash.h"
 #include "openvswitch/hmap.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openflow/openflow.h"
 #include "openvswitch/dynamic-string.h"
@@ -234,7 +235,11 @@ ofphdrs_decode(struct ofphdrs *hdrs,
         hdrs->vendor = ntohl(ovh->vendor);
         if (hdrs->vendor == NX_VENDOR_ID || hdrs->vendor == ONF_VENDOR_ID) {
             hdrs->subtype = ntohl(ovh->subtype);
-        } else {
+        } else if (hdrs->vendor == DPKM_VENDOR_ID) {
+            hdrs->subtype = ntohl(ovh->subtype);
+            //test_if_working2();
+        }
+        else {
             log_bad_vendor(hdrs->vendor);
             return OFPERR_OFPBRC_BAD_VENDOR;
         }

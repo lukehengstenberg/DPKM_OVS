@@ -38,6 +38,7 @@
 #include "netdev.h"
 #include "nx-match.h"
 #include "odp-util.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openflow/openflow.h"
 #include "openvswitch/dynamic-string.h"
@@ -656,6 +657,19 @@ ofp_print_echo(struct ds *string, const struct ofp_header *oh, int verbosity)
 }
 
 static enum ofperr
+ofp_print_dpkm_test(struct ds *string, const struct ofp_header *oh, int verbosity)
+{
+    size_t len = ntohs(oh->length);
+
+    ds_put_format(string, " %"PRIuSIZE" test bytes dpkm \n", len - sizeof *oh);
+    if (verbosity > 1) {
+        ds_put_hex_dump(string, oh + 1, len - sizeof *oh, 0, true);
+    }
+
+    return 0;
+}
+
+static enum ofperr
 ofp_print_role_message(struct ds *string, const struct ofp_header *oh)
 {
     struct ofputil_role_request rr;
@@ -1184,6 +1198,15 @@ ofp_to_string__(const struct ofp_header *oh,
 
     case OFPTYPE_CT_FLUSH_ZONE:
         return ofp_print_nxt_ct_flush_zone(string, ofpmsg_body(oh));
+    // Need to add appropriate print statements.
+    case OFPTYPE_DPKM_SET_KEY:
+    case OFPTYPE_DPKM_ADD_PEER:
+    case OFPTYPE_DPKM_DELETE_PEER:
+    case OFPTYPE_DPKM_STATUS:
+        break;
+    case OFPTYPE_DPKM_TEST_REQUEST:
+    case OFPTYPE_DPKM_TEST_REPLY:
+        return ofp_print_dpkm_test(string, oh, verbosity);
     }
 
     return 0;

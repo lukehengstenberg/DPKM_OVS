@@ -16,6 +16,7 @@
 #ifndef OPENVSWITCH_FLOW_H
 #define OPENVSWITCH_FLOW_H 1
 
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/packets.h"
 #include "openvswitch/util.h"

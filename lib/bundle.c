@@ -25,6 +25,7 @@
 #include "colors.h"
 #include "multipath.h"
 #include "nx-match.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/dynamic-string.h"
 #include "openvswitch/meta-flow.h"

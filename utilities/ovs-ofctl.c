@@ -42,6 +42,7 @@
 #include "odp-util.h"
 #include "ofp-version-opt.h"
 #include "ofproto/ofproto.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openflow/openflow.h"
 #include "openvswitch/dynamic-string.h"

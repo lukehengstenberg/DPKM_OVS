@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include "colors.h"
 #include "nx-match.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/dynamic-string.h"
 #include "openvswitch/ofp-actions.h"

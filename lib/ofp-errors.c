@@ -18,6 +18,7 @@
 #include <errno.h>
 #include "byte-order.h"
 #include "openflow/openflow.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/dynamic-string.h"
 #include "openvswitch/ofp-errors.h"

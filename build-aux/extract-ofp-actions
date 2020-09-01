@@ -21,7 +21,8 @@ version_reverse_map = dict((v, k) for (k, v) in version_map.items())
 # Map from vendor name to the length of the action header.
 vendor_map = {"OF": (0x00000000,  4),
               "ONF": (0x4f4e4600, 10),
-              "NX": (0x00002320, 10)}
+              "NX": (0x00002320, 10),
+              "DPKM": (0xa20a0323, 10)}
 
 # Basic types used in action arguments.
 types = {}

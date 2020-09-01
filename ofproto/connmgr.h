@@ -24,6 +24,7 @@
 #include "openvswitch/ofp-connection.h"
 #include "ofproto.h"
 #include "ofproto-provider.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/ofp-errors.h"
 #include "openvswitch/ofp-packet.h"

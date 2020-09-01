@@ -72,6 +72,7 @@ struct ovs_list;
  *          * NXST: Nicira extension statistics or multipart message.
  *          * ONFT: Open Networking Foundation extension message.
  *          * ONFST: Open Networking Foundation multipart message.
+ *          * DPKM: Data Plane Key Management extension message.
  *
  *      As new vendors implement extensions it will make sense to expand the
  *      dictionary of possible types.
@@ -516,7 +517,26 @@ enum ofpraw {
 
     /* NXST 1.0+ (4): struct nx_ipfix_stats_reply[]. */
     OFPRAW_NXST_IPFIX_FLOW_REPLY,
+
+    /* DPKM 1.0+ (0): struct ofp_dpkm_set_key. */
+    OFPRAW_DPKM_SET_KEY,
+
+    /* DPKM 1.0+ (2): struct ofp_dpkm_add_peer. */
+    OFPRAW_DPKM_ADD_PEER,
+
+    /* DPKM 1.0+ (3): struct ofp_dpkm_delete_peer. */
+    OFPRAW_DPKM_DELETE_PEER,
+
+    /* DPKM 1.0+ (5): struct ofp_dpkm_status. */
+    OFPRAW_DPKM_STATUS,
+
+    /* DPKM 1.0+ (7): struct ofp_dpkm_test_request. */
+    OFPRAW_DPKM_TEST_REQUEST,
+
+    /* DPKM 1.0+ (8): struct ofp_dpkm_test_request. */
+    OFPRAW_DPKM_TEST_REPLY,
 };
+int test_if_working2(void);
 
 /* Decoding messages into OFPRAW_* values. */
 enum ofperr ofpraw_decode(enum ofpraw *, const struct ofp_header *);
@@ -565,6 +585,13 @@ enum ofptype {
     OFPTYPE_ERROR,               /* OFPRAW_OFPT_ERROR. */
     OFPTYPE_ECHO_REQUEST,        /* OFPRAW_OFPT_ECHO_REQUEST. */
     OFPTYPE_ECHO_REPLY,          /* OFPRAW_OFPT_ECHO_REPLY. */
+
+    OFPTYPE_DPKM_SET_KEY,        /* OFPRAW_DPKM_SET_KEY. */
+    OFPTYPE_DPKM_ADD_PEER,       /* OFPRAW_DPKM_ADD_PEER. */
+    OFPTYPE_DPKM_DELETE_PEER,    /* OFPRAW_DPKM_DELETE_PEER. */
+    OFPTYPE_DPKM_STATUS,         /* OFPRAW_DPKM_STATUS. */
+    OFPTYPE_DPKM_TEST_REQUEST,   /* OFPRAW_DPKM_TEST_REQUEST. */
+    OFPTYPE_DPKM_TEST_REPLY,     /* OFPRAW_DPKM_TEST_REPLY. */
 
     /* Switch configuration messages. */
     OFPTYPE_FEATURES_REQUEST,    /* OFPRAW_OFPT_FEATURES_REQUEST. */

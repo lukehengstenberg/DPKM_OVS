@@ -17,6 +17,7 @@
 #include <config.h>
 #include "openvswitch/ofp-connection.h"
 #include "byte-order.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/ofp-errors.h"
 #include "openvswitch/ofp-monitor.h"

@@ -24,6 +24,7 @@
 #include <stdint.h>
 
 #include "compiler.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/ofp-errors.h"
 #include "openvswitch/types.h"

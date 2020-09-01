@@ -18,6 +18,7 @@
 #include "openvswitch/ofp-ipfix.h"
 #include <stdlib.h>
 #include "byte-order.h"
+#include "openflow/dpkm-ext.h"
 #include "openflow/nicira-ext.h"
 #include "openvswitch/ofp-errors.h"
 #include "openvswitch/ofp-msgs.h"
