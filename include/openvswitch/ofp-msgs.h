@@ -521,6 +521,9 @@ enum ofpraw {
     /* DPKM 1.0+ (0): struct ofp_dpkm_set_key. */
     OFPRAW_DPKM_SET_KEY,
 
+    /* DPKM 1.0+ (1): struct ofp_dpkm_delete_key. */
+    OFPRAW_DPKM_DELETE_KEY,
+
     /* DPKM 1.0+ (2): struct ofp_dpkm_add_peer. */
     OFPRAW_DPKM_ADD_PEER,
 
@@ -587,6 +590,7 @@ enum ofptype {
     OFPTYPE_ECHO_REPLY,          /* OFPRAW_OFPT_ECHO_REPLY. */
 
     OFPTYPE_DPKM_SET_KEY,        /* OFPRAW_DPKM_SET_KEY. */
+    OFPTYPE_DPKM_DELETE_KEY,     /* OFPRAW_DPKM_DELETE_KEY. */
     OFPTYPE_DPKM_ADD_PEER,       /* OFPRAW_DPKM_ADD_PEER. */
     OFPTYPE_DPKM_DELETE_PEER,    /* OFPRAW_DPKM_DELETE_PEER. */
     OFPTYPE_DPKM_STATUS,         /* OFPRAW_DPKM_STATUS. */

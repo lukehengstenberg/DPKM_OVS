@@ -305,6 +305,25 @@ ofputil_decode_dpkm_set_key(const struct ofp_header *oh,
     return 0;
 }
 
+/* Decodes an OFPT_DPKM_DELETE_KEY message. */
+enum ofperr
+ofputil_decode_dpkm_delete_key(const struct ofp_header *oh,
+                            struct ofputil_dpkm_delete_key *kin)
+{
+    struct ofpbuf b = ofpbuf_const_initializer(oh, ntohs(oh->length));
+    enum ofpraw raw = ofpraw_pull_assert(&b);
+
+    if (raw == OFPRAW_DPKM_DELETE_KEY) {
+        const struct ofp_dpkm_delete_key *osk = b.msg;
+        kin->experimenter = ntohl(osk->experimenter);
+        kin->subtype = ntohl(osk->subtype);
+    } else {
+        //return OFPERR_DPKM_DELETE_KEY;
+        OVS_NOT_REACHED();
+    }
+    return 0;
+}
+
 /* Decodes an OFPT_DPKM_ADD_PEER message. */
 enum ofperr
 ofputil_decode_dpkm_add_peer(const struct ofp_header *oh,

@@ -48,8 +48,12 @@ struct ofputil_dpkm_test_request {
 struct ofputil_dpkm_set_key {
     uint32_t experimenter;
     uint32_t subtype;
-    //struct ofpact *ofpacts;     /* Actions. */
-    //size_t ofpacts_len;         /* Size of ofpacts in bytes. */
+};
+
+/* Abstract of ofp_dpkm_delete_key. */
+struct ofputil_dpkm_delete_key {
+    uint32_t experimenter;
+    uint32_t subtype;
 };
 
 /* Abstract of ofp_dpkm_add_peer. */
@@ -91,6 +95,8 @@ struct ofpbuf *ofputil_encode_dpkm_test_reply(const struct ofp_header *,
 
 enum ofperr ofputil_decode_dpkm_set_key(const struct ofp_header *,
                                     struct ofputil_dpkm_set_key *);
+enum ofperr ofputil_decode_dpkm_delete_key(const struct ofp_header *,
+                                    struct ofputil_dpkm_delete_key *);
 enum ofperr ofputil_decode_dpkm_add_peer(const struct ofp_header *,
                                     struct ofputil_dpkm_add_peer *);
 enum ofperr ofputil_decode_dpkm_delete_peer(const struct ofp_header *,

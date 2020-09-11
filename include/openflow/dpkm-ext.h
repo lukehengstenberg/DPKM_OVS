@@ -60,6 +60,12 @@ struct ofp_dpkm_set_key {
 };
 OFP_ASSERT(sizeof(struct ofp_dpkm_set_key) == 8);
 
+struct ofp_dpkm_delete_key {
+    ovs_be32 experimenter;
+    ovs_be32 subtype;
+};
+OFP_ASSERT(sizeof(struct ofp_dpkm_delete_key) == 8);
+
 struct ofp_dpkm_test_request {
     ovs_be32 experimenter;
     ovs_be32 subtype;

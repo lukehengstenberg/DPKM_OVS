@@ -1200,6 +1200,7 @@ ofp_to_string__(const struct ofp_header *oh,
         return ofp_print_nxt_ct_flush_zone(string, ofpmsg_body(oh));
     // Need to add appropriate print statements.
     case OFPTYPE_DPKM_SET_KEY:
+    case OFPTYPE_DPKM_DELETE_KEY:
     case OFPTYPE_DPKM_ADD_PEER:
     case OFPTYPE_DPKM_DELETE_PEER:
     case OFPTYPE_DPKM_STATUS:

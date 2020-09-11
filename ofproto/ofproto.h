@@ -566,6 +566,7 @@ enum ofputil_table_miss ofproto_table_get_miss_config(const struct ofproto *,
 
 /* DPKM. */
 int configure_wg(void);
+int unconfigure_wg(void);
 int add_peer_wg(struct ofputil_dpkm_add_peer pin);
 int delete_peer_wg(struct ofputil_dpkm_delete_peer din);
 int get_pubkey(char * publickey);

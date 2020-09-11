@@ -6289,14 +6289,37 @@ int configure_wg(void)
     return 0;
 }
 
+int unconfigure_wg(void)
+{
+    char *cmd = "./UnconfigureWG.sh";
+    char buf[BUFSIZE];
+    FILE *fp;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        printf("Error opening pipe!\n");
+        return -1;
+    }
+    while (fgets(buf, BUFSIZE, fp) != NULL )
+    {
+        printf("OUTPUT: %s", buf);
+    }
+    if(pclose(fp))
+    {
+        printf("Command not found or exited with error status\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 int add_peer_wg(struct ofputil_dpkm_add_peer pin)
 {
     char *cmd = (char*)malloc(400 * sizeof(char));
     pin.key[strcspn(pin.key, "\n")] = 0;
-    sprintf(cmd, "wg set wg0 peer %s allowed-ips %s/32 endpoint %s:5555",
+    sprintf(cmd, "wg set wg0 peer %s allowed-ips %s/32 endpoint %s:51820",
             pin.key, pin.ipv4_wg, pin.ipv4_addr);
-    //sprintf(cmd, "echo 'peer %s allowed-ips %s/32 endpoint %s:5555' > peer.txt",
-            //pin.key, pin.ipv4_wg, pin.ipv4_addr);
+
     char buf[BUFSIZE];
     FILE *fp;
 
@@ -6449,6 +6472,45 @@ handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
 
     ofconn_send_reply(ofconn, buf);
 
+    return 0;
+}
+
+/* DPKM Handlers. */
+static enum ofperr
+handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
+{
+    struct ofputil_dpkm_delete_key kin;
+    struct ofp_dpkm_status *cstatus;
+    struct ofpbuf *buf;
+    //char public_key[BUFSIZE];
+    char ipv4_addr[IP_LEN];
+    char wg_addr[IP_LEN];
+    enum ofperr error;
+
+    error = ofputil_decode_dpkm_delete_key(oh, &kin);
+    if (error)
+    {
+        return error;
+    }
+    //ovs_mutex_lock(&ofproto_mutex);
+    //unconfigure_wg();
+    //get_pubkey(public_key);
+    get_ip_addr(ipv4_addr);
+    get_wg_addr(wg_addr);
+
+    //ovs_mutex_unlock(&ofproto_mutex);
+    // Make this into separate function.
+    buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
+    cstatus = ofpbuf_put_zeros(buf, sizeof *cstatus);
+
+    cstatus->status_flag = htonl(4);
+
+    //ovs_strlcpy(cstatus->key, public_key, sizeof cstatus->key);
+    ovs_strlcpy(cstatus->ipv4_addr, ipv4_addr, sizeof cstatus->ipv4_addr);
+    ovs_strlcpy(cstatus->ipv4_wg, wg_addr, sizeof cstatus->ipv4_wg);
+
+    ofconn_send_reply(ofconn, buf);
+    unconfigure_wg();
     return 0;
 }
 
@@ -8815,6 +8877,8 @@ handle_single_part_openflow(struct ofconn *ofconn, const struct ofp_header *oh,
         /* DPKM extensions. */
     case OFPTYPE_DPKM_SET_KEY:
         return handle_dpkm_set_key(ofconn, oh);
+    case OFPTYPE_DPKM_DELETE_KEY:
+        return handle_dpkm_delete_key(ofconn, oh);
     case OFPTYPE_DPKM_ADD_PEER:
         return handle_dpkm_add_peer(ofconn, oh);
     case OFPTYPE_DPKM_DELETE_PEER:
