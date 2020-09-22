@@ -28,7 +28,7 @@ extern "C" {
 /* This sequence number should be incremented whenever anything involving flows
  * or the wildcarding of flows changes.  This will cause build assertion
  * failures in places which likely need to be updated. */
-#define FLOW_WC_SEQ 42
+#define FLOW_WC_SEQ 43
 
 /* Number of Open vSwitch extension 32-bit registers. */
 #define FLOW_N_REGS 16
@@ -117,6 +117,8 @@ struct flow {
     ovs_u128 ct_label;          /* Connection label. */
     uint32_t conj_id;           /* Conjunction ID. */
     ofp_port_t actset_output;   /* Output port in action set. */
+    uint8_t dpkm_method;        /* DPKM_METHOD oxm value field. */
+    uint8_t pad0[7];            /* Pad to 64 bits. */
 
     /* L2, Order the same as in the Ethernet header! (64-bit aligned) */
     struct eth_addr dl_dst;     /* Ethernet destination address. */
@@ -159,6 +161,7 @@ struct flow {
                                  * field.
                                  * Keep last for BUILD_ASSERT_DECL below. */
     ovs_be32 pad3;              /* Pad to 64 bits. */
+
 };
 BUILD_ASSERT_DECL(sizeof(struct flow) % sizeof(uint64_t) == 0);
 BUILD_ASSERT_DECL(sizeof(struct flow_tnl) % sizeof(uint64_t) == 0);
@@ -168,8 +171,8 @@ BUILD_ASSERT_DECL(sizeof(struct ovs_key_nsh) % sizeof(uint64_t) == 0);
 
 /* Remember to update FLOW_WC_SEQ when changing 'struct flow'. */
 BUILD_ASSERT_DECL(offsetof(struct flow, igmp_group_ip4) + sizeof(uint32_t)
-                  == sizeof(struct flow_tnl) + sizeof(struct ovs_key_nsh) + 300
-                  && FLOW_WC_SEQ == 42);
+                  == sizeof(struct flow_tnl) + sizeof(struct ovs_key_nsh) + 308
+                  && FLOW_WC_SEQ == 43);
 
 /* Incremental points at which flow classification may be performed in
  * segments.

@@ -118,6 +118,7 @@ PADDED_MEMBERS_CACHELINE_MARKER(CACHE_LINE_SIZE, cacheline0,
     struct conn *conn;          /* Cached conntrack connection. */
     bool reply;                 /* True if reply direction. */
     bool icmp_related;          /* True if ICMP related. */
+    uint8_t dpkm_method;        /* DPKM method. 0 start 1 stop. */
 );
 
 PADDED_MEMBERS_CACHELINE_MARKER(CACHE_LINE_SIZE, cacheline1,

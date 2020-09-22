@@ -283,7 +283,8 @@ mf_is_all_wild(const struct mf_field *mf, const struct flow_wildcards *wc)
     }
     case MFF_ACTSET_OUTPUT:
         return !wc->masks.actset_output;
-
+    case MFF_DPKM_METHOD:
+        return !wc->masks.dpkm_method;
     case MFF_ETH_SRC:
         return eth_addr_is_zero(wc->masks.dl_src);
     case MFF_ETH_DST:
@@ -554,6 +555,7 @@ mf_is_value_valid(const struct mf_field *mf, const union mf_value *value)
     CASE_MFF_REGS:
     CASE_MFF_XREGS:
     CASE_MFF_XXREGS:
+    case MFF_DPKM_METHOD:
     case MFF_ETH_SRC:
     case MFF_ETH_DST:
     case MFF_ETH_TYPE:
@@ -803,6 +805,10 @@ mf_get_value(const struct mf_field *mf, const struct flow *flow,
 
     CASE_MFF_XXREGS:
         value->be128 = hton128(flow_get_xxreg(flow, mf->id - MFF_XXREG0));
+        break;
+
+    case MFF_DPKM_METHOD:
+        value->u8 = flow->dpkm_method;
         break;
 
     case MFF_ETH_SRC:
@@ -1147,6 +1153,10 @@ mf_set_value(const struct mf_field *mf,
 
     CASE_MFF_XXREGS:
         match_set_xxreg(match, mf->id - MFF_XXREG0, ntoh128(value->be128));
+        break;
+
+    case MFF_DPKM_METHOD:
+        match_set_dpkm_method(match, value->u8);
         break;
 
     case MFF_ETH_SRC:
@@ -1564,6 +1574,10 @@ mf_set_flow_value(const struct mf_field *mf,
         flow_set_xxreg(flow, mf->id - MFF_XXREG0, ntoh128(value->be128));
         break;
 
+    case MFF_DPKM_METHOD:
+        flow->dpkm_method = value->u8;
+        break;
+
     case MFF_ETH_SRC:
         flow->dl_src = value->mac;
         break;
@@ -1835,6 +1849,7 @@ mf_is_pipeline_field(const struct mf_field *mf)
     case MFF_CT_IPV6_DST:
     case MFF_CT_TP_SRC:
     case MFF_CT_TP_DST:
+    case MFF_DPKM_METHOD:
     case MFF_ETH_SRC:
     case MFF_ETH_DST:
     case MFF_ETH_TYPE:
@@ -2099,6 +2114,11 @@ mf_set_wild(const struct mf_field *mf, struct match *match, char **err_str)
         break;
     }
 
+    case MFF_DPKM_METHOD:
+        match->flow.dpkm_method = 0;
+        match->wc.masks.dpkm_method = 0;
+        break;
+
     case MFF_ETH_SRC:
         match->flow.dl_src = eth_addr_zero;
         match->wc.masks.dl_src = eth_addr_zero;
@@ -2335,6 +2355,7 @@ mf_set(const struct mf_field *mf,
     case MFF_IN_PORT_OXM:
     case MFF_ACTSET_OUTPUT:
     case MFF_SKB_PRIORITY:
+    case MFF_DPKM_METHOD:
     case MFF_ETH_TYPE:
     case MFF_DL_VLAN:
     case MFF_DL_VLAN_PCP:

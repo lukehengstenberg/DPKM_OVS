@@ -2979,6 +2979,14 @@ actions=clone(load:0->NXM_OF_IN_PORT[],output:123)
     <field id="MFF_XXREG2" title="Double-Extended Register 2" hidden="yes"/>
     <field id="MFF_XXREG3" title="Double-Extended Register 3" hidden="yes"/>
   </group>
+  <group title="DPKM Extensions">
+      <field id="MFF_DPKM_METHOD" title="DPKM Flow Mod Method">
+          <p>
+            The DPKM flow label for setting flow and carrying out a procedure based
+            on the value. 1 start communication, 2 stop communication.
+          </p>
+      </field>
+  </group>
 
   <group title="Layer 2 (Ethernet)">
     <p>
@@ -4214,7 +4222,7 @@ r r c c c.
           information available.
         </li>
       </ul>
-      
+
       <p>
         Thus, this field is likely to be most useful for an Open vSwitch switch
         configured in <code>OFPC_FRAG_NX_MATCH</code> mode.  See the

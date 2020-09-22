@@ -78,7 +78,9 @@ OXM_CLASSES = {"NXM_OF_":        (0,          0x0000, 'extension'),
                # if OVS didn't have those grandfathered in.  It is currently
                # used only to test support for experimenter OXM, since there
                # are barely any real uses of experimenter OXM in the wild.
-               "NXOXM_ET_":      (0x00002320, 0xffff, 'extension')}
+               "NXOXM_ET_":      (0x00002320, 0xffff, 'extension'),
+               #DPKM Extension type.
+               "DPKMOXM_OF_":    (0xa20a0323, 0xffff, 'extension')}
 
 def oxm_name_to_class(name):
     prefix = ''

@@ -1083,6 +1083,25 @@ enum OVS_PACKED_ENUM mf_field_id {
 #error "Need to update MFF_REG* to match FLOW_N_XXREGS"
 #endif
 
+/* ##  --- ## */
+/* ## DPKM ## */
+/* ##  --- ## */
+
+     /* "dpkm_method".
+      *
+      * The DPKM flow label for setting flow and carrying out a procedure based
+      * on the value. 1 start communication, 2 stop communication.
+      *
+      * Type: u8.
+      * Maskable: no.
+      * Formatting: decimal.
+      * Prerequisites: none.
+      * Access: read-only.
+      * NXM: none.
+      * OXM: DPKMOXM_OF_DPKM_METHOD(1) since v2.13.
+      */
+    MFF_DPKM_METHOD,
+
 /* ## -------- ## */
 /* ## Ethernet ## */
 /* ## -------- ## */

@@ -139,6 +139,7 @@ void match_set_ct_mark(struct match *, uint32_t ct_mark);
 void match_set_ct_mark_masked(struct match *, uint32_t ct_mark, uint32_t mask);
 void match_set_ct_label(struct match *, ovs_u128 ct_label);
 void match_set_ct_label_masked(struct match *, ovs_u128 ct_label, ovs_u128 mask);
+void match_set_dpkm_method(struct match *, uint8_t dpkm_method);
 void match_set_ct_nw_src(struct match *, ovs_be32);
 void match_set_ct_nw_src_masked(struct match *, ovs_be32, ovs_be32 mask);
 void match_set_ct_nw_dst(struct match *, ovs_be32);

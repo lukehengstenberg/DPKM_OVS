@@ -965,7 +965,7 @@ static inline void
 pkt_metadata_from_flow(struct pkt_metadata *md, const struct flow *flow)
 {
     /* Update this function whenever struct flow changes. */
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 42);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 43);
 
     md->recirc_id = flow->recirc_id;
     md->dp_hash = flow->dp_hash;
@@ -977,6 +977,7 @@ pkt_metadata_from_flow(struct pkt_metadata *md, const struct flow *flow)
     md->ct_zone = flow->ct_zone;
     md->ct_mark = flow->ct_mark;
     md->ct_label = flow->ct_label;
+    md->dpkm_method = flow->dpkm_method;
 
     md->ct_orig_tuple_ipv6 = false;
     if (flow->dl_type && is_ct_valid(flow, NULL, NULL)) {

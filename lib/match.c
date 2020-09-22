@@ -488,6 +488,13 @@ match_set_ct_label_masked(struct match *match, ovs_u128 value, ovs_u128 mask)
 }
 
 void
+match_set_dpkm_method(struct match *match, uint8_t dpkm_method)
+{
+    match->flow.dpkm_method = dpkm_method;
+    match->wc.masks.dpkm_method = UINT8_MAX;
+}
+
+void
 match_set_ct_nw_src(struct match *match, ovs_be32 ct_nw_src)
 {
     match->flow.ct_nw_src = ct_nw_src;
@@ -1462,7 +1469,7 @@ match_format(const struct match *match,
     bool is_megaflow = false;
     int i;
 
-    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 42);
+    BUILD_ASSERT_DECL(FLOW_WC_SEQ == 43);
 
     if (priority != OFP_DEFAULT_PRIORITY) {
         ds_put_format(s, "%spriority=%s%d,",
@@ -1523,6 +1530,11 @@ match_format(const struct match *match,
 
     if (!ovs_u128_is_zero(wc->masks.ct_label)) {
         format_ct_label_masked(s, &f->ct_label, &wc->masks.ct_label);
+    }
+
+    if (wc->masks.dpkm_method) {
+        ds_put_format(s, "%sdpkm_method=%s%"PRIu8",",
+                      colors.param, colors.end, f->dpkm_method);
     }
 
     format_ip_netmask(s, "ct_nw_src", f->ct_nw_src,
