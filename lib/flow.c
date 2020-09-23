@@ -795,7 +795,7 @@ miniflow_extract(struct dp_packet *packet, struct miniflow *dst)
         miniflow_pad_from_64(mf, packet_type);
         miniflow_push_be32(mf, packet_type, packet_type);
     }
-    if (md->dpkm_method == 1) {
+    if (md->dpkm_method) {
         miniflow_push_uint8(mf, dpkm_method, md->dpkm_method);
     }
 
@@ -1723,6 +1723,9 @@ flow_format(struct ds *ds,
     }
     if (ovs_u128_is_zero(flow->ct_label)) {
         WC_UNMASK_FIELD(wc, ct_label);
+    }
+    if(!flow->dpkm_method) {
+        WC_UNMASK_FIELD(wc, dpkm_method);
     }
     if (!is_ct_valid(flow, &match.wc, NULL) || !flow->ct_nw_proto) {
         WC_UNMASK_FIELD(wc, ct_nw_proto);

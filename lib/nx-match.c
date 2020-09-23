@@ -1071,6 +1071,10 @@ nx_put_raw(struct ofpbuf *b, enum ofp_version oxm, const struct match *match,
         nxm_put_32(&ctx, MFF_RECIRC_ID, oxm, htonl(flow->recirc_id));
     }
 
+    if (match->wc.masks.dpkm_method) {
+        nxm_put_8(&ctx, MFF_DPKM_METHOD, oxm, flow->dpkm_method);
+    }
+
     if (match->wc.masks.conj_id) {
         nxm_put_32(&ctx, MFF_CONJ_ID, oxm, htonl(flow->conj_id));
     }
@@ -1088,10 +1092,6 @@ nx_put_raw(struct ofpbuf *b, enum ofp_version oxm, const struct match *match,
     if (match->wc.masks.actset_output) {
         nxm_put_32(&ctx, MFF_ACTSET_OUTPUT, oxm,
                    ofputil_port_to_ofp11(flow->actset_output));
-    }
-
-    if (match->wc.masks.dpkm_method) {
-        nxm_put_8(&ctx, MFF_DPKM_METHOD, oxm, htonl(flow->dpkm_method));
     }
 
     /* Ethernet. */
