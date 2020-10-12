@@ -6457,7 +6457,7 @@ get_ip_addr(char *ipv4_addr)
             inet_ntop(AF_INET, tmpAddrPtr,ipv4_addr, INET_ADDRSTRLEN);
         }
     }
-    if (ifa == NULL)
+    if (ipv4_addr && !ipv4_addr[0])
     {
         return OFPERR_DPKM_GET_IP_S;
     }
@@ -6493,7 +6493,7 @@ get_wg_addr(char *wg_addr)
             inet_ntop(AF_INET, tmpAddrPtr,wg_addr, INET_ADDRSTRLEN);
         }
     }
-    if (ifa == NULL)
+    if (ipv4_addr && !ipv4_addr[0])
     {
         return OFPERR_DPKM_GET_IP_WG;
     }
