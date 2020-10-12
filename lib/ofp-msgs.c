@@ -236,8 +236,8 @@ ofphdrs_decode(struct ofphdrs *hdrs,
         if (hdrs->vendor == NX_VENDOR_ID || hdrs->vendor == ONF_VENDOR_ID) {
             hdrs->subtype = ntohl(ovh->subtype);
         } else if (hdrs->vendor == DPKM_VENDOR_ID) {
+            /* If DPKM get the subtype to identify message type. */
             hdrs->subtype = ntohl(ovh->subtype);
-            //test_if_working2();
         }
         else {
             log_bad_vendor(hdrs->vendor);

@@ -102,9 +102,6 @@ enum ofperr ofputil_decode_dpkm_add_peer(const struct ofp_header *,
 enum ofperr ofputil_decode_dpkm_delete_peer(const struct ofp_header *,
                                        struct ofputil_dpkm_delete_peer *);
 
-struct ofpbuf *ofputil_encode_dpkm_status(const struct ofp_header *,
-                              const struct ofputil_dpkm_status *);
-
 struct ofpbuf *ofputil_encode_barrier_request(enum ofp_version);
 
 #ifdef __cplusplus

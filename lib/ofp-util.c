@@ -216,34 +216,7 @@ ofputil_encode_echo_reply(const struct ofp_header *rq)
 
 #define DPKM_VENDOR 0xa20a0323
 
-#include <stdio.h>
-#include <stdlib.h>
-#define BUFSIZE 128
-
-int test_if_working(void)
-{
-    char *cmd = "grep --help > OVS_Test.txt";
-    char buf[BUFSIZE];
-    FILE *fp;
-
-    if ((fp = popen(cmd, "r")) == NULL)
-    {
-        printf("Error opening pipe!\n");
-        return -1;
-    }
-    while (fgets(buf, BUFSIZE, fp) != NULL )
-    {
-        printf("OUTPUT: %s", buf);
-    }
-    if(pclose(fp))
-    {
-        printf("Command not found or exited with error status\n");
-        return -1;
-    }
-    return 0;
-}
-
-
+/* Decodes an OFPT_DPKM_TEST_REQUEST message (testing purposes only). */
 enum ofperr
 ofputil_decode_dpkm_test_message(const struct ofp_header *oh,
                             struct ofputil_dpkm_test_request *rr)
@@ -263,6 +236,7 @@ ofputil_decode_dpkm_test_message(const struct ofp_header *oh,
     return 0;
 }
 
+/* Encodes an OFPT_DPKM_TEST_REPLY message (testing purposes only). */
 struct ofpbuf *
 ofputil_encode_dpkm_test_reply(const struct ofp_header *request,
                           const struct ofputil_dpkm_test_request *rr)
@@ -286,7 +260,12 @@ ofputil_encode_dpkm_test_reply(const struct ofp_header *request,
     return buf;
 }
 
-/* Decodes an OFPT_DPKM_SET_KEY message. */
+/*
+ * Decodes an OFPT_DPKM_SET_KEY message.
+ * Maps the message fields to an abstract structure which is used to configure
+ * WG and format the status response.
+ * If subtype is not SET_KEY an error will be thrown.
+ */
 enum ofperr
 ofputil_decode_dpkm_set_key(const struct ofp_header *oh,
                             struct ofputil_dpkm_set_key *kin)
@@ -305,7 +284,12 @@ ofputil_decode_dpkm_set_key(const struct ofp_header *oh,
     return 0;
 }
 
-/* Decodes an OFPT_DPKM_DELETE_KEY message. */
+/*
+ * Decodes an OFPT_DPKM_DELETE_KEY message.
+ * Maps the message fields to an abstract structure which is used to configure
+ * WG and format the status response.
+ * If subtype is not DELETE_KEY an error will be thrown.
+ */
 enum ofperr
 ofputil_decode_dpkm_delete_key(const struct ofp_header *oh,
                             struct ofputil_dpkm_delete_key *kin)
@@ -324,7 +308,12 @@ ofputil_decode_dpkm_delete_key(const struct ofp_header *oh,
     return 0;
 }
 
-/* Decodes an OFPT_DPKM_ADD_PEER message. */
+/*
+ * Decodes an OFPT_DPKM_ADD_PEER message.
+ * Maps the message fields to an abstract structure which is used to configure
+ * WG and format the status response.
+ * If subtype is not ADD_PEER an error will be thrown.
+ */
 enum ofperr
 ofputil_decode_dpkm_add_peer(const struct ofp_header *oh,
                              struct ofputil_dpkm_add_peer *pin)
@@ -345,7 +334,12 @@ ofputil_decode_dpkm_add_peer(const struct ofp_header *oh,
     return 0;
 }
 
-/* Decodes an OFPT_DPKM_DELETE_PEER message. */
+/*
+ * Decodes an OFPT_DPKM_DELETE_PEER message.
+ * Maps the message fields to an abstract structure which is used to configure
+ * WG and format the status response.
+ * If subtype is not DELETE_PEER an error will be thrown.
+ */
 enum ofperr
 ofputil_decode_dpkm_delete_peer(const struct ofp_header *oh,
                              struct ofputil_dpkm_delete_peer *din)
@@ -364,36 +358,6 @@ ofputil_decode_dpkm_delete_peer(const struct ofp_header *oh,
         OVS_NOT_REACHED();
     }
     return 0;
-}
-
-/* Creates and returns an OFPT_DPKM_STATUS message. */
-struct ofpbuf *
-ofputil_encode_dpkm_status(const struct ofp_header *request,
-                      const struct ofputil_dpkm_status *cstatus)
-{
-    struct ofpbuf *buf;
-    enum ofpraw raw;
-    static const char *public_key = "MMhEd/uLIEvUxfvuFOF34bAvbYPnaSwFrhgNMf8nT34=";
-
-    raw = ofpraw_decode_assert(request);
-    if (raw == OFPRAW_DPKM_SET_KEY) {
-        struct ofp_dpkm_status *kstatus;
-
-        buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, request, 0);
-        kstatus = ofpbuf_put_zeros(buf, sizeof *kstatus);
-
-        //kstatus->experimenter = htonl(cstatus->experimenter);
-       // kstatus->subtype = htonl(cstatus->subtype);
-        kstatus->status_flag = htonl(cstatus->status_flag);
-        //kstatus->status_flag = 0;
-        //kstatus->ipv4_dst = htonl(cstatus->ipv4_dst);
-        //kstatus->ipv4_dst = 0xc0a80008;
-        ovs_strlcpy(kstatus->key, public_key, sizeof kstatus->key);
-    } else {
-        OVS_NOT_REACHED();
-    }
-
-  return buf;
 }
 
 struct ofpbuf *

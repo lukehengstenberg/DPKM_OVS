@@ -6259,12 +6259,25 @@ handle_role_request(struct ofconn *ofconn, const struct ofp_header *oh)
 
     return 0;
 }
-
+/*
+ * Openflow extensions for the Data Plane Key Management Protocol.
+ * The functions below (lines 6270 to 6691) are used to modify the WireGuard
+ * configuration using script, handle messages received from the controller, and
+ * create status responses based on the state.
+ * This is where the main DPKM functionality takes place.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #define BUFSIZE 128
 #define IP_LEN 32
 
+/*
+ * Configures the WireGuard interface by executing the script in executable file
+ * ConfigureWG.sh which is positioned in root during setup.
+ * This script file generates the keys for the WG interface and sets up other
+ * aspects such as the listening port and IP routing.
+ * Returns 0 on success and -1 if an error occurs.
+ */
 int configure_wg(void)
 {
     char *cmd = "./ConfigureWG.sh";
@@ -6289,6 +6302,13 @@ int configure_wg(void)
     return 0;
 }
 
+/*
+ * Unconfigures the WireGuard interface by executing the script in executable file
+ * UnconfigureWG.sh which is positioned in root during setup.
+ * This script file removes the current WireGuard configuration by deleting the
+ * WG interface and its keys, recreating it as a blank unconfigured interface.
+ * Returns 0 on success and -1 if an error occurs.
+ */
 int unconfigure_wg(void)
 {
     char *cmd = "./UnconfigureWG.sh";
@@ -6313,11 +6333,19 @@ int unconfigure_wg(void)
     return 0;
 }
 
+/*
+ * Adds a new peer to the WireGuard interface using the information stored in
+ * the given add_peer struct created prior from a received DPKM_ADD_PEER message.
+ * Sets the peer using its public key, WG ipv4 and local ip address space as the
+ * allowed-ips (accepts messages from these addresses), the ipv4 address of the
+ * switch as the endpoint (where to send packets), and keep-alive interval of 30s.
+ * Returns 0 on success and -1 if an error occurs.
+ */
 int add_peer_wg(struct ofputil_dpkm_add_peer pin)
 {
-    char *cmd = (char*)malloc(400 * sizeof(char));
+    char *cmd = (char*)malloc(500 * sizeof(char));
     pin.key[strcspn(pin.key, "\n")] = 0;
-    sprintf(cmd, "wg set wg0 peer %s allowed-ips %s/32 endpoint %s:51820",
+    sprintf(cmd, "wg set wg0 peer %s allowed-ips %s/32 allowed-ips 192.168.0.0/24 endpoint %s:51820 persistent-keepalive 30",
             pin.key, pin.ipv4_wg, pin.ipv4_addr);
 
     char buf[BUFSIZE];
@@ -6341,6 +6369,11 @@ int add_peer_wg(struct ofputil_dpkm_add_peer pin)
     return 0;
 }
 
+/*
+ * Deletes an existing peer using the public key stored in the given delete_peer
+ * struct created prior from a received DELETE_PEER message.
+ * Returns 0 on success and -1 if an error occurs.
+ */
 int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
 {
     char *cmd = (char*)malloc(300 * sizeof(char));
@@ -6368,6 +6401,10 @@ int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
     return 0;
 }
 
+/*
+ * Reads the public key from its storage file into char publickey.
+ * Returns 0 on success and -1 if an error occurs.
+ */
 int get_pubkey(char *publickey)
 {
 
@@ -6387,6 +6424,11 @@ int get_pubkey(char *publickey)
     return 0;
 }
 
+/*
+ * Gets the ipv4 address of the switch s1 directly from the running system using
+ * the interface name and copies it into char ipv4_addr.
+ * Returns 0 on success.
+ */
 int get_ip_addr(char *ipv4_addr)
 {
     struct ifaddrs * ifAddrStruct=NULL;
@@ -6396,21 +6438,28 @@ int get_ip_addr(char *ipv4_addr)
     getifaddrs(&ifAddrStruct);
 
     for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        /* Continue until matching interface addr found or all interfaces checked. */
         if (!ifa->ifa_addr)
         {
             continue;
         }
-        if ((strcmp(ifa->ifa_name,"enp0s3")==0)&&(ifa->ifa_addr->sa_family == AF_INET))
-        { // check it is IP4
-            // is a valid IP4 Address
+        /* Get IPv4 address of interface s1 if exists and has a valid address. */
+        if ((strcmp(ifa->ifa_name,"s1")==0)&&(ifa->ifa_addr->sa_family == AF_INET))
+        {
             tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-
+            /* Convert network address to char string. */
             inet_ntop(AF_INET, tmpAddrPtr,ipv4_addr, INET_ADDRSTRLEN);
         }
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
     return 0;
 }
+
+/*
+ * Gets the ipv4 address of the wireguard interface wg0 directly from the running
+ * system using the interface name and copies it into char wg_addr.
+ * Returns 0 on success.
+ */
 int get_wg_addr(char *wg_addr)
 {
     struct ifaddrs * ifAddrStruct=NULL;
@@ -6420,15 +6469,16 @@ int get_wg_addr(char *wg_addr)
     getifaddrs(&ifAddrStruct);
 
     for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        /* Continue until matching interface addr found or all interfaces checked. */
         if (!ifa->ifa_addr)
         {
             continue;
         }
+        /* Get IPv4 address of interface wg0 if exists and has a valid address. */
         if ((strcmp(ifa->ifa_name,"wg0")==0)&&(ifa->ifa_addr->sa_family == AF_INET))
-        { // check it is IP4
-            // is a valid IP4 Address
+        {
             tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-
+            /* Convert network address to char string. */
             inet_ntop(AF_INET, tmpAddrPtr,wg_addr, INET_ADDRSTRLEN);
         }
     }
@@ -6436,7 +6486,12 @@ int get_wg_addr(char *wg_addr)
     return 0;
 }
 
-/* DPKM Handlers. */
+/*
+ * Handler for any DPKM_SET_KEY messages received from the controller.
+ * Decodes the message, runs the necessary script to configure WG, encodes a
+ * DPKM_STATUS response and sends it to the controller.
+ * Returns 0 on success or error.
+ */
 static enum ofperr
 handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
 {
@@ -6448,72 +6503,80 @@ handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
     char wg_addr[IP_LEN];
     enum ofperr error;
 
+    /* Decode the SET_KEY message. */
     error = ofputil_decode_dpkm_set_key(oh, &kin);
     if (error)
     {
         return error;
     }
-    //ovs_mutex_lock(&ofproto_mutex);
+    /* Generate keys and configure WG, get public key and ip addresses.*/
     configure_wg();
     get_pubkey(public_key);
     get_ip_addr(ipv4_addr);
     get_wg_addr(wg_addr);
 
-    //ovs_mutex_unlock(&ofproto_mutex);
-    // Make this into separate function.
+    /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
     cstatus = ofpbuf_put_zeros(buf, sizeof *cstatus);
-
+    /* Set flag as 0: CONFIGURED. */
     cstatus->status_flag = 0;
-
+    /* Copy values into message fields.*/
     ovs_strlcpy(cstatus->key, public_key, sizeof cstatus->key);
     ovs_strlcpy(cstatus->ipv4_addr, ipv4_addr, sizeof cstatus->ipv4_addr);
     ovs_strlcpy(cstatus->ipv4_wg, wg_addr, sizeof cstatus->ipv4_wg);
-
+    /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
 
     return 0;
 }
 
-/* DPKM Handlers. */
+/*
+ * Handler for any DPKM_DELETE_KEY messages received from the controller.
+ * Decodes the message, runs the necessary script to unconfigure WG, encodes a
+ * DPKM_STATUS response and sends it to the controller.
+ * Returns 0 on success or error.
+ */
 static enum ofperr
 handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
 {
     struct ofputil_dpkm_delete_key kin;
     struct ofp_dpkm_status *cstatus;
     struct ofpbuf *buf;
-    //char public_key[BUFSIZE];
     char ipv4_addr[IP_LEN];
     char wg_addr[IP_LEN];
     enum ofperr error;
 
+    /* Decode the DELETE_KEY message. */
     error = ofputil_decode_dpkm_delete_key(oh, &kin);
     if (error)
     {
         return error;
     }
-    //ovs_mutex_lock(&ofproto_mutex);
-    //unconfigure_wg();
-    //get_pubkey(public_key);
+    /* Get ip addresses.*/
     get_ip_addr(ipv4_addr);
     get_wg_addr(wg_addr);
 
-    //ovs_mutex_unlock(&ofproto_mutex);
-    // Make this into separate function.
+    /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
     cstatus = ofpbuf_put_zeros(buf, sizeof *cstatus);
-
+    /* Set flag as 4: REVOKED. */
     cstatus->status_flag = htonl(4);
-
-    //ovs_strlcpy(cstatus->key, public_key, sizeof cstatus->key);
+    /* Copy values into message fields.*/
     ovs_strlcpy(cstatus->ipv4_addr, ipv4_addr, sizeof cstatus->ipv4_addr);
     ovs_strlcpy(cstatus->ipv4_wg, wg_addr, sizeof cstatus->ipv4_wg);
-
+    /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
+    /* Unconfigure the interface last as switch briefly disconnects. */
     unconfigure_wg();
     return 0;
 }
 
+/*
+ * Handler for any DPKM_ADD_PEER messages received from the controller.
+ * Decodes the message, runs the necessary script to add a new peer, encodes a
+ * DPKM_STATUS response and sends it to the controller.
+ * Returns 0 on success or error.
+ */
 static enum ofperr
 handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
 {
@@ -6523,33 +6586,43 @@ handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     char public_key[BUFSIZE];
     char ipv4_addr[IP_LEN];
     char wg_addr[IP_LEN];
-    //char ipv4_peer[IP_LEN];
     enum ofperr error;
 
+    /* Decode the ADD_PEER message. */
     error = ofputil_decode_dpkm_add_peer(oh, &pin);
     if(error)
     {
         return error;
     }
+
+    /* Add the peer, get the new public key and ip addresses.*/
     add_peer_wg(pin);
     get_pubkey(public_key);
     get_ip_addr(ipv4_addr);
     get_wg_addr(wg_addr);
 
+    /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
     pstatus = ofpbuf_put_zeros(buf, sizeof *pstatus);
-
+    /* Set flag as 1: PEER_ADDED. */
     pstatus->status_flag = htonl(1);
-
+    /* Copy values into message fields.*/
     ovs_strlcpy(pstatus->key, public_key, sizeof pstatus->key);
     ovs_strlcpy(pstatus->ipv4_addr, ipv4_addr, sizeof pstatus->ipv4_addr);
     ovs_strlcpy(pstatus->ipv4_wg, wg_addr, sizeof pstatus->ipv4_wg);
     ovs_strlcpy(pstatus->ipv4_peer, pin.ipv4_addr, sizeof pstatus->ipv4_peer);
-
+    /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
+
     return 0;
 }
 
+/*
+ * Handler for any DPKM_DELETE_PEER messages received from the controller.
+ * Decodes the message, runs the necessary script to remove a peer, encodes a
+ * DPKM_STATUS response and sends it to the controller.
+ * Returns 0 on success or error.
+ */
 static enum ofperr
 handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
 {
@@ -6561,30 +6634,42 @@ handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     char wg_addr[IP_LEN];
     enum ofperr error;
 
+    /* Decode the DELETE_PEER message. */
     error = ofputil_decode_dpkm_delete_peer(oh, &din);
     if(error)
     {
         return error;
     }
+
+    /* Delete the peer, get the public key and ip addresses.*/
     delete_peer_wg(din);
     get_pubkey(public_key);
     get_ip_addr(ipv4_addr);
     get_wg_addr(wg_addr);
 
+    /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
     dstatus = ofpbuf_put_zeros(buf, sizeof *dstatus);
-
+    /* Set flag as 2: PEER_REMOVED. */
     dstatus->status_flag = htonl(2);
-
+    /* Copy values into message fields.*/
     ovs_strlcpy(dstatus->key, public_key, sizeof dstatus->key);
     ovs_strlcpy(dstatus->ipv4_addr, ipv4_addr, sizeof dstatus->ipv4_addr);
     ovs_strlcpy(dstatus->ipv4_wg, wg_addr, sizeof dstatus->ipv4_wg);
     ovs_strlcpy(dstatus->ipv4_peer, din.ipv4_addr, sizeof dstatus->ipv4_peer);
-
+    /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
+
     return 0;
 }
 
+/*
+ * Handler for any DPKM_TEST_REQUEST messages received from the controller.
+ * Decodes the message, encodes a DPKM_TEST_REPLY response and sends it to the
+ * controller.
+ * Testing purposes only.
+ * Returns 0 on success or error.
+ */
 static enum ofperr
 handle_dpkm_test_request(struct ofconn *ofconn, const struct ofp_header *oh)
 {
@@ -6592,7 +6677,7 @@ handle_dpkm_test_request(struct ofconn *ofconn, const struct ofp_header *oh)
     struct ofputil_dpkm_test_request reply;
     struct ofpbuf *buf;
     enum ofperr error;
-    //test_if_working();
+
     error = ofputil_decode_dpkm_test_message(oh, &request);
     if (error)
     {
@@ -8874,7 +8959,8 @@ handle_single_part_openflow(struct ofconn *ofconn, const struct ofp_header *oh,
     case OFPTYPE_ECHO_REPLY:
         return 0;
 
-        /* DPKM extensions. */
+        /*
+         * DPKM extensions: Call handler based on received message type. */
     case OFPTYPE_DPKM_SET_KEY:
         return handle_dpkm_set_key(ofconn, oh);
     case OFPTYPE_DPKM_DELETE_KEY:
