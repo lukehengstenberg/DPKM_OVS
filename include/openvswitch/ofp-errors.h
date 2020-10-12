@@ -892,6 +892,41 @@ enum ofperr {
     /* NX1.0-1.1(1,535), NX1.2+(36).  Protocol is not configured on this
      * Open vSwitch instance. */
     OFPERR_NXST_NOT_CONFIGURED,
+
+/* ## ---------- ## */
+/* ##    DPKM    ## */
+/* ## ---------- ## */
+
+    /* DPKM1.2+(0). Failed to decode DPKM_SET_KEY message. */
+    OFPERR_DPKM_DECODE_SET_KEY,
+    /* DPKM1.2+(1). Failed to decode DPKM_DELETE_KEY message. */
+    OFPERR_DPKM_DECODE_DELETE_KEY,
+    /* DPKM1.2+(2). Failed to decode DPKM_ADD_PEER message. */
+    OFPERR_DPKM_DECODE_ADD_PEER,
+    /* DPKM1.2+(3). Failed to decode DPKM_DELETE_PEER message. */
+    OFPERR_DPKM_DECODE_DELETE_PEER,
+    /* DPKM1.2+(4). Failed to decode DPKM_GET_STATUS message. */
+    OFPERR_DPKM_DECODE_GET_STATUS,
+    /* DPKM1.2+(5). Failed to execute WG configuration script. */
+    OFPERR_DPKM_EXECUTE_SET_KEY,
+    /* DPKM1.2+(6). Failed to execute WG unconfiguration script. */
+    OFPERR_DPKM_EXECUTE_DELETE_KEY,
+    /* DPKM1.2+(7). Failed to execute WG add peer script. */
+    OFPERR_DPKM_EXECUTE_ADD_PEER,
+    /* DPKM1.2+(8). Failed to execute WG delete peer script. */
+    OFPERR_DPKM_EXECUTE_DELETE_PEER,
+    /* DPKM1.2+(9). Failed when trying to retrieve the public key. */
+    OFPERR_DPKM_GET_KEY,
+    /* DPKM1.2+(10). Failed when trying to retrieve the ipv4 addr of switch. */
+    OFPERR_DPKM_GET_IP_S,
+    /* DPKM1.2+(11). Failed when trying to retrieve the ipv4 addr of WG. */
+    OFPERR_DPKM_GET_IP_WG,
+    /* DPKM1.2+(12). Message is missing value for field public key. */
+    OFPERR_DPKM_MISSING_KEY,
+    /* DPKM1.2+(13). Message is missing value for field switch ipv4 addr. */
+    OFPERR_DPKM_MISSING_IP_S,
+    /* DPKM1.2+(14). Message is missing value for field WG ipv4 addr. */
+    OFPERR_DPKM_MISSING_IP_WG,
 };
 
 const char *ofperr_domain_get_name(enum ofp_version);

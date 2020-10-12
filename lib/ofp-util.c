@@ -278,8 +278,7 @@ ofputil_decode_dpkm_set_key(const struct ofp_header *oh,
         kin->experimenter = ntohl(osk->experimenter);
         kin->subtype = ntohl(osk->subtype);
     } else {
-        //return OFPERR_DPKM_SET_PRIVATE_KEY;
-        OVS_NOT_REACHED();
+        return OFPERR_DPKM_DECODE_SET_KEY;
     }
     return 0;
 }
@@ -302,8 +301,7 @@ ofputil_decode_dpkm_delete_key(const struct ofp_header *oh,
         kin->experimenter = ntohl(osk->experimenter);
         kin->subtype = ntohl(osk->subtype);
     } else {
-        //return OFPERR_DPKM_DELETE_KEY;
-        OVS_NOT_REACHED();
+        return OFPERR_DPKM_DECODE_DELETE_KEY;
     }
     return 0;
 }
@@ -323,13 +321,22 @@ ofputil_decode_dpkm_add_peer(const struct ofp_header *oh,
 
     if (raw == OFPRAW_DPKM_ADD_PEER) {
         const struct ofp_dpkm_add_peer *apm = b.msg;
+        if (apm->key[0] == '\0'){
+            return OFPERR_DPKM_MISSING_KEY;
+        }
+        if (apm->ipv4_addr[0] == '\0'){
+            return OFPERR_DPKM_MISSING_IP_S;
+        }
+        if (apm->ipv4_wg[0] == '\0'){
+            return OFPERR_DPKM_MISSING_IP_WG;
+        }
         pin->experimenter = ntohl(apm->experimenter);
         pin->subtype = ntohl(apm->subtype);
         ovs_strlcpy(pin->key, apm->key, sizeof pin->key);
         ovs_strlcpy(pin->ipv4_addr, apm->ipv4_addr, sizeof pin->ipv4_addr);
         ovs_strlcpy(pin->ipv4_wg, apm->ipv4_wg, sizeof pin->ipv4_wg);
     } else {
-        OVS_NOT_REACHED();
+        return OFPERR_DPKM_DECODE_ADD_PEER;
     }
     return 0;
 }
@@ -349,13 +356,22 @@ ofputil_decode_dpkm_delete_peer(const struct ofp_header *oh,
 
     if (raw == OFPRAW_DPKM_DELETE_PEER) {
         const struct ofp_dpkm_delete_peer *dpm = b.msg;
+        if (dpm->key[0] == '\0'){
+            return OFPERR_DPKM_MISSING_KEY;
+        }
+        if (dpm->ipv4_addr[0] == '\0'){
+            return OFPERR_DPKM_MISSING_IP_S;
+        }
+        if (dpm->ipv4_wg[0] == '\0'){
+            return OFPERR_DPKM_MISSING_IP_WG;
+        }
         din->experimenter = ntohl(dpm->experimenter);
         din->subtype = ntohl(dpm->subtype);
         ovs_strlcpy(din->key, dpm->key, sizeof din->key);
         ovs_strlcpy(din->ipv4_addr, dpm->ipv4_addr, sizeof din->ipv4_addr);
         ovs_strlcpy(din->ipv4_wg, dpm->ipv4_wg, sizeof din->ipv4_wg);
     } else {
-        OVS_NOT_REACHED();
+        return OFPERR_DPKM_DECODE_DELETE_PEER;
     }
     return 0;
 }

@@ -565,13 +565,13 @@ enum ofputil_table_miss ofproto_table_get_miss_config(const struct ofproto *,
                                                       uint8_t table_id);
 
 /* DPKM. */
-int configure_wg(void);
-int unconfigure_wg(void);
-int add_peer_wg(struct ofputil_dpkm_add_peer pin);
-int delete_peer_wg(struct ofputil_dpkm_delete_peer din);
-int get_pubkey(char * publickey);
-int get_ip_addr(char * ipv4_addr);
-int get_wg_addr(char * wg_addr);
+enum ofperr configure_wg(void);
+enum ofperr unconfigure_wg(void);
+enum ofperr add_peer_wg(struct ofputil_dpkm_add_peer pin);
+enum ofperr delete_peer_wg(struct ofputil_dpkm_delete_peer din);
+enum ofperr get_pubkey(char * publickey);
+enum ofperr get_ip_addr(char * ipv4_addr);
+enum ofperr get_wg_addr(char * wg_addr);
 
 #ifdef  __cplusplus
 }

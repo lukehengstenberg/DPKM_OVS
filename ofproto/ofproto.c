@@ -6276,9 +6276,10 @@ handle_role_request(struct ofconn *ofconn, const struct ofp_header *oh)
  * ConfigureWG.sh which is positioned in root during setup.
  * This script file generates the keys for the WG interface and sets up other
  * aspects such as the listening port and IP routing.
- * Returns 0 on success and -1 if an error occurs.
+ * Returns 0 on success or error.
  */
-int configure_wg(void)
+enum ofperr
+configure_wg(void)
 {
     char *cmd = "./ConfigureWG.sh";
     char buf[BUFSIZE];
@@ -6286,8 +6287,8 @@ int configure_wg(void)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        printf("Error opening pipe!\n");
-        return -1;
+        //printf("Error opening pipe!\n");
+        return OFPERR_DPKM_EXECUTE_SET_KEY;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
     {
@@ -6295,8 +6296,8 @@ int configure_wg(void)
     }
     if(pclose(fp))
     {
-        printf("Command not found or exited with error status\n");
-        return -1;
+        //printf("Command not found or exited with error status\n");
+        return OFPERR_DPKM_EXECUTE_SET_KEY;
     }
 
     return 0;
@@ -6307,9 +6308,10 @@ int configure_wg(void)
  * UnconfigureWG.sh which is positioned in root during setup.
  * This script file removes the current WireGuard configuration by deleting the
  * WG interface and its keys, recreating it as a blank unconfigured interface.
- * Returns 0 on success and -1 if an error occurs.
+ * Returns 0 on success or error.
  */
-int unconfigure_wg(void)
+enum ofperr
+unconfigure_wg(void)
 {
     char *cmd = "./UnconfigureWG.sh";
     char buf[BUFSIZE];
@@ -6317,8 +6319,8 @@ int unconfigure_wg(void)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        printf("Error opening pipe!\n");
-        return -1;
+        //printf("Error opening pipe!\n");
+        return OFPERR_DPKM_EXECUTE_DELETE_KEY;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
     {
@@ -6326,8 +6328,8 @@ int unconfigure_wg(void)
     }
     if(pclose(fp))
     {
-        printf("Command not found or exited with error status\n");
-        return -1;
+        //printf("Command not found or exited with error status\n");
+        return OFPERR_DPKM_EXECUTE_DELETE_KEY;
     }
 
     return 0;
@@ -6339,9 +6341,10 @@ int unconfigure_wg(void)
  * Sets the peer using its public key, WG ipv4 and local ip address space as the
  * allowed-ips (accepts messages from these addresses), the ipv4 address of the
  * switch as the endpoint (where to send packets), and keep-alive interval of 30s.
- * Returns 0 on success and -1 if an error occurs.
+ * Returns 0 on success or error.
  */
-int add_peer_wg(struct ofputil_dpkm_add_peer pin)
+enum ofperr
+add_peer_wg(struct ofputil_dpkm_add_peer pin)
 {
     char *cmd = (char*)malloc(500 * sizeof(char));
     pin.key[strcspn(pin.key, "\n")] = 0;
@@ -6353,8 +6356,8 @@ int add_peer_wg(struct ofputil_dpkm_add_peer pin)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        printf("Error opening pipe!\n");
-        return -1;
+        //printf("Error opening pipe!\n");
+        return OFPERR_DPKM_EXECUTE_ADD_PEER;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
     {
@@ -6362,8 +6365,8 @@ int add_peer_wg(struct ofputil_dpkm_add_peer pin)
     }
     if(pclose(fp))
     {
-        printf("Command not found or exited with error status\n");
-        return -1;
+        //printf("Command not found or exited with error status\n");
+        return OFPERR_DPKM_EXECUTE_ADD_PEER;
     }
     free(cmd);
     return 0;
@@ -6372,9 +6375,10 @@ int add_peer_wg(struct ofputil_dpkm_add_peer pin)
 /*
  * Deletes an existing peer using the public key stored in the given delete_peer
  * struct created prior from a received DELETE_PEER message.
- * Returns 0 on success and -1 if an error occurs.
+ * Returns 0 on success or error.
  */
-int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
+enum ofperr
+delete_peer_wg(struct ofputil_dpkm_delete_peer din)
 {
     char *cmd = (char*)malloc(300 * sizeof(char));
     din.key[strcspn(din.key, "\n")] = 0;
@@ -6385,8 +6389,8 @@ int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        printf("Error opening pipe!\n");
-        return -1;
+        //printf("Error opening pipe!\n");
+        return OFPERR_DPKM_EXECUTE_DELETE_PEER;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
     {
@@ -6394,8 +6398,8 @@ int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
     }
     if(pclose(fp))
     {
-        printf("Command not found or exited with error status\n");
-        return -1;
+        //printf("Command not found or exited with error status\n");
+        return OFPERR_DPKM_EXECUTE_DELETE_PEER;
     }
     free(cmd);
     return 0;
@@ -6403,22 +6407,23 @@ int delete_peer_wg(struct ofputil_dpkm_delete_peer din)
 
 /*
  * Reads the public key from its storage file into char publickey.
- * Returns 0 on success and -1 if an error occurs.
+ * Returns 0 on success or error.
  */
-int get_pubkey(char *publickey)
+enum ofperr
+get_pubkey(char *publickey)
 {
 
     FILE *fp = fopen("publickey", "r");
     if (fp == NULL)
     {
-        printf("Cannot open file");
-        return -1;
+        //printf("Cannot open file");
+        return OFPERR_DPKM_GET_KEY;
     }
 
     if(fgets(publickey, BUFSIZE, (FILE*)fp) == NULL)
     {
-          printf("Error reading file content.");
-          return -1;
+        //printf("Error reading file content.");
+        return OFPERR_DPKM_GET_KEY;
     }
     fclose(fp);
     return 0;
@@ -6427,9 +6432,10 @@ int get_pubkey(char *publickey)
 /*
  * Gets the ipv4 address of the switch s1 directly from the running system using
  * the interface name and copies it into char ipv4_addr.
- * Returns 0 on success.
+ * Returns 0 on success or error.
  */
-int get_ip_addr(char *ipv4_addr)
+enum ofperr
+get_ip_addr(char *ipv4_addr)
 {
     struct ifaddrs * ifAddrStruct=NULL;
     struct ifaddrs * ifa=NULL;
@@ -6451,6 +6457,10 @@ int get_ip_addr(char *ipv4_addr)
             inet_ntop(AF_INET, tmpAddrPtr,ipv4_addr, INET_ADDRSTRLEN);
         }
     }
+    if (ifa == NULL)
+    {
+        return OFPERR_DPKM_GET_IP_S;
+    }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
     return 0;
 }
@@ -6458,9 +6468,10 @@ int get_ip_addr(char *ipv4_addr)
 /*
  * Gets the ipv4 address of the wireguard interface wg0 directly from the running
  * system using the interface name and copies it into char wg_addr.
- * Returns 0 on success.
+ * Returns 0 on success or error.
  */
-int get_wg_addr(char *wg_addr)
+enum ofperr
+get_wg_addr(char *wg_addr)
 {
     struct ifaddrs * ifAddrStruct=NULL;
     struct ifaddrs * ifa=NULL;
@@ -6481,6 +6492,10 @@ int get_wg_addr(char *wg_addr)
             /* Convert network address to char string. */
             inet_ntop(AF_INET, tmpAddrPtr,wg_addr, INET_ADDRSTRLEN);
         }
+    }
+    if (ifa == NULL)
+    {
+        return OFPERR_DPKM_GET_IP_WG;
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
     return 0;
@@ -6510,10 +6525,26 @@ handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
         return error;
     }
     /* Generate keys and configure WG, get public key and ip addresses.*/
-    configure_wg();
-    get_pubkey(public_key);
-    get_ip_addr(ipv4_addr);
-    get_wg_addr(wg_addr);
+    error = configure_wg();
+    if (error)
+    {
+        return error;
+    }
+    error = get_pubkey(public_key);
+    if (error)
+    {
+        return error;
+    }
+    error = get_ip_addr(ipv4_addr);
+    if (error)
+    {
+        return error;
+    }
+    error = get_wg_addr(wg_addr);
+    if (error)
+    {
+        return error;
+    }
 
     /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
@@ -6553,8 +6584,16 @@ handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
         return error;
     }
     /* Get ip addresses.*/
-    get_ip_addr(ipv4_addr);
-    get_wg_addr(wg_addr);
+    error = get_ip_addr(ipv4_addr);
+    if (error)
+    {
+        return error;
+    }
+    error = get_wg_addr(wg_addr);
+    if (error)
+    {
+        return error;
+    }
 
     /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
@@ -6567,7 +6606,11 @@ handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
     /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
     /* Unconfigure the interface last as switch briefly disconnects. */
-    unconfigure_wg();
+    error = unconfigure_wg();
+    if (error)
+    {
+        return error;
+    }
     return 0;
 }
 
@@ -6594,12 +6637,27 @@ handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     {
         return error;
     }
-
     /* Add the peer, get the new public key and ip addresses.*/
-    add_peer_wg(pin);
-    get_pubkey(public_key);
-    get_ip_addr(ipv4_addr);
-    get_wg_addr(wg_addr);
+    error = add_peer_wg(pin);
+    if (error)
+    {
+        return error;
+    }
+    error = get_pubkey(public_key);
+    if (error)
+    {
+        return error;
+    }
+    error = get_ip_addr(ipv4_addr);
+    if (error)
+    {
+        return error;
+    }
+    error = get_wg_addr(wg_addr);
+    if (error)
+    {
+        return error;
+    }
 
     /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
@@ -6640,12 +6698,27 @@ handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     {
         return error;
     }
-
     /* Delete the peer, get the public key and ip addresses.*/
-    delete_peer_wg(din);
-    get_pubkey(public_key);
-    get_ip_addr(ipv4_addr);
-    get_wg_addr(wg_addr);
+    error = delete_peer_wg(din);
+    if(error)
+    {
+        return error;
+    }
+    error = get_pubkey(public_key);
+    if(error)
+    {
+        return error;
+    }
+    error = get_ip_addr(ipv4_addr);
+    if(error)
+    {
+        return error;
+    }
+    error = get_wg_addr(wg_addr);
+    if(error)
+    {
+        return error;
+    }
 
     /* Create and initialise status object. */
     buf = ofpraw_alloc_reply(OFPRAW_DPKM_STATUS, oh, 0);
