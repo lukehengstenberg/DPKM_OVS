@@ -6299,7 +6299,6 @@ configure_wg(void)
         //printf("Command not found or exited with error status\n");
         return OFPERR_DPKM_EXECUTE_SET_KEY;
     }
-
     return 0;
 }
 
@@ -6426,6 +6425,7 @@ get_pubkey(char *publickey)
         return OFPERR_DPKM_GET_KEY;
     }
     fclose(fp);
+
     return 0;
 }
 
@@ -6462,6 +6462,7 @@ get_ip_addr(char *ipv4_addr)
         return OFPERR_DPKM_GET_IP_S;
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+
     return 0;
 }
 
@@ -6493,11 +6494,12 @@ get_wg_addr(char *wg_addr)
             inet_ntop(AF_INET, tmpAddrPtr,wg_addr, INET_ADDRSTRLEN);
         }
     }
-    if (ipv4_addr && !ipv4_addr[0])
+    if (wg_addr && !wg_addr[0])
     {
         return OFPERR_DPKM_GET_IP_WG;
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+
     return 0;
 }
 
@@ -6611,6 +6613,7 @@ handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
     {
         return error;
     }
+
     return 0;
 }
 
