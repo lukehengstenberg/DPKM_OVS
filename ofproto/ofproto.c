@@ -6287,7 +6287,6 @@ configure_wg(void)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        //printf("Error opening pipe!\n");
         return OFPERR_DPKM_EXECUTE_SET_KEY;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
@@ -6296,7 +6295,6 @@ configure_wg(void)
     }
     if(pclose(fp))
     {
-        //printf("Command not found or exited with error status\n");
         return OFPERR_DPKM_EXECUTE_SET_KEY;
     }
     return 0;
@@ -6318,7 +6316,6 @@ unconfigure_wg(void)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        //printf("Error opening pipe!\n");
         return OFPERR_DPKM_EXECUTE_DELETE_KEY;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
@@ -6327,7 +6324,6 @@ unconfigure_wg(void)
     }
     if(pclose(fp))
     {
-        //printf("Command not found or exited with error status\n");
         return OFPERR_DPKM_EXECUTE_DELETE_KEY;
     }
 
@@ -6355,7 +6351,6 @@ add_peer_wg(struct ofputil_dpkm_add_peer pin)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        //printf("Error opening pipe!\n");
         return OFPERR_DPKM_EXECUTE_ADD_PEER;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
@@ -6364,7 +6359,6 @@ add_peer_wg(struct ofputil_dpkm_add_peer pin)
     }
     if(pclose(fp))
     {
-        //printf("Command not found or exited with error status\n");
         return OFPERR_DPKM_EXECUTE_ADD_PEER;
     }
     free(cmd);
@@ -6388,7 +6382,6 @@ delete_peer_wg(struct ofputil_dpkm_delete_peer din)
 
     if ((fp = popen(cmd, "r")) == NULL)
     {
-        //printf("Error opening pipe!\n");
         return OFPERR_DPKM_EXECUTE_DELETE_PEER;
     }
     while (fgets(buf, BUFSIZE, fp) != NULL )
@@ -6397,7 +6390,6 @@ delete_peer_wg(struct ofputil_dpkm_delete_peer din)
     }
     if(pclose(fp))
     {
-        //printf("Command not found or exited with error status\n");
         return OFPERR_DPKM_EXECUTE_DELETE_PEER;
     }
     free(cmd);
@@ -6415,13 +6407,11 @@ get_pubkey(char *publickey)
     FILE *fp = fopen("publickey", "r");
     if (fp == NULL)
     {
-        //printf("Cannot open file");
         return OFPERR_DPKM_GET_KEY;
     }
 
     if(fgets(publickey, BUFSIZE, (FILE*)fp) == NULL)
     {
-        //printf("Error reading file content.");
         return OFPERR_DPKM_GET_KEY;
     }
     fclose(fp);
@@ -9045,7 +9035,6 @@ handle_single_part_openflow(struct ofconn *ofconn, const struct ofp_header *oh,
         return handle_dpkm_add_peer(ofconn, oh);
     case OFPTYPE_DPKM_DELETE_PEER:
         return handle_dpkm_delete_peer(ofconn, oh);
-        return 0;
     case OFPTYPE_DPKM_STATUS:
         return 0;
 
