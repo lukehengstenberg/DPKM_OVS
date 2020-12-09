@@ -6420,43 +6420,6 @@ get_pubkey(char *publickey)
 }
 
 /*
- * Gets the ipv4 address of the switch s1 directly from the running system using
- * the interface name and copies it into char ipv4_addr.
- * Returns 0 on success or error.
- */
-enum ofperr
-get_ip_addr(char *ipv4_addr)
-{
-    struct ifaddrs * ifAddrStruct=NULL;
-    struct ifaddrs * ifa=NULL;
-    void * tmpAddrPtr=NULL;
-
-    getifaddrs(&ifAddrStruct);
-
-    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
-        /* Continue until matching interface addr found or all interfaces checked. */
-        if (!ifa->ifa_addr)
-        {
-            continue;
-        }
-        /* Get IPv4 address of interface s1 if exists and has a valid address. */
-        if ((strcmp(ifa->ifa_name,"s1")==0)&&(ifa->ifa_addr->sa_family == AF_INET))
-        {
-            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-            /* Convert network address to char string. */
-            inet_ntop(AF_INET, tmpAddrPtr,ipv4_addr, INET_ADDRSTRLEN);
-        }
-    }
-    if (ipv4_addr && !ipv4_addr[0])
-    {
-        return OFPERR_DPKM_GET_IP_S;
-    }
-    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-
-    return 0;
-}
-
-/*
  * Gets the ipv4 address of the wireguard interface wg0 directly from the running
  * system using the interface name and copies it into char wg_addr.
  * Returns 0 on success or error.
@@ -6506,7 +6469,6 @@ handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
     struct ofp_dpkm_status *cstatus;
     struct ofpbuf *buf;
     char public_key[BUFSIZE];
-    char ipv4_addr[IP_LEN];
     char wg_addr[IP_LEN];
     enum ofperr error;
 
@@ -6527,11 +6489,6 @@ handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
     {
         return error;
     }
-    error = get_ip_addr(ipv4_addr);
-    if (error)
-    {
-        return error;
-    }
     error = get_wg_addr(wg_addr);
     if (error)
     {
@@ -6545,7 +6502,6 @@ handle_dpkm_set_key(struct ofconn *ofconn, const struct ofp_header *oh)
     cstatus->status_flag = 0;
     /* Copy values into message fields.*/
     ovs_strlcpy(cstatus->key, public_key, sizeof cstatus->key);
-    ovs_strlcpy(cstatus->ipv4_addr, ipv4_addr, sizeof cstatus->ipv4_addr);
     ovs_strlcpy(cstatus->ipv4_wg, wg_addr, sizeof cstatus->ipv4_wg);
     /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
@@ -6565,18 +6521,11 @@ handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
     struct ofputil_dpkm_delete_key kin;
     struct ofp_dpkm_status *cstatus;
     struct ofpbuf *buf;
-    char ipv4_addr[IP_LEN];
     char wg_addr[IP_LEN];
     enum ofperr error;
 
     /* Decode the DELETE_KEY message. */
     error = ofputil_decode_dpkm_delete_key(oh, &kin);
-    if (error)
-    {
-        return error;
-    }
-    /* Get ip addresses.*/
-    error = get_ip_addr(ipv4_addr);
     if (error)
     {
         return error;
@@ -6593,7 +6542,6 @@ handle_dpkm_delete_key(struct ofconn *ofconn, const struct ofp_header *oh)
     /* Set flag as 4: REVOKED. */
     cstatus->status_flag = htonl(4);
     /* Copy values into message fields.*/
-    ovs_strlcpy(cstatus->ipv4_addr, ipv4_addr, sizeof cstatus->ipv4_addr);
     ovs_strlcpy(cstatus->ipv4_wg, wg_addr, sizeof cstatus->ipv4_wg);
     /* Send response to controller. */
     ofconn_send_reply(ofconn, buf);
@@ -6620,7 +6568,6 @@ handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     struct ofp_dpkm_status *pstatus;
     struct ofpbuf *buf;
     char public_key[BUFSIZE];
-    char ipv4_addr[IP_LEN];
     char wg_addr[IP_LEN];
     enum ofperr error;
 
@@ -6641,11 +6588,6 @@ handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     {
         return error;
     }
-    error = get_ip_addr(ipv4_addr);
-    if (error)
-    {
-        return error;
-    }
     error = get_wg_addr(wg_addr);
     if (error)
     {
@@ -6659,7 +6601,6 @@ handle_dpkm_add_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     pstatus->status_flag = htonl(1);
     /* Copy values into message fields.*/
     ovs_strlcpy(pstatus->key, public_key, sizeof pstatus->key);
-    ovs_strlcpy(pstatus->ipv4_addr, ipv4_addr, sizeof pstatus->ipv4_addr);
     ovs_strlcpy(pstatus->ipv4_wg, wg_addr, sizeof pstatus->ipv4_wg);
     ovs_strlcpy(pstatus->ipv4_peer, pin.ipv4_addr, sizeof pstatus->ipv4_peer);
     /* Send response to controller. */
@@ -6681,7 +6622,6 @@ handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     struct ofp_dpkm_status *dstatus;
     struct ofpbuf *buf;
     char public_key[BUFSIZE];
-    char ipv4_addr[IP_LEN];
     char wg_addr[IP_LEN];
     enum ofperr error;
 
@@ -6702,11 +6642,6 @@ handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     {
         return error;
     }
-    error = get_ip_addr(ipv4_addr);
-    if(error)
-    {
-        return error;
-    }
     error = get_wg_addr(wg_addr);
     if(error)
     {
@@ -6720,7 +6655,6 @@ handle_dpkm_delete_peer(struct ofconn *ofconn, const struct ofp_header *oh)
     dstatus->status_flag = htonl(2);
     /* Copy values into message fields.*/
     ovs_strlcpy(dstatus->key, public_key, sizeof dstatus->key);
-    ovs_strlcpy(dstatus->ipv4_addr, ipv4_addr, sizeof dstatus->ipv4_addr);
     ovs_strlcpy(dstatus->ipv4_wg, wg_addr, sizeof dstatus->ipv4_wg);
     ovs_strlcpy(dstatus->ipv4_peer, din.ipv4_addr, sizeof dstatus->ipv4_peer);
     /* Send response to controller. */
